@@ -35,16 +35,11 @@ def get_firefox_browser():
     return browser
 
 
-def connect_to_page(browser, page_number=1):
-    URL = 'https://www.avito.ru/respublika_krym/kvartiry/prodam/vtorichka'
-    global current_url
+def connect_to_page(browser, URL, page_number=1):
     if page_number == 1:
         page_url = URL
     else:
-        if current_url is None:
-            page_url = URL
-        else:
-            page_url = f'{current_url}?p={page_number}'
+        page_url = f'{URL}?p={page_number}'
     browser.get(page_url)
 
 

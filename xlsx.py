@@ -4,30 +4,56 @@ from openpyxl.styles import NamedStyle, Font, Alignment, PatternFill, Border, \
 
 
 def write_to_xlsx_file(data, file_name):
-    xlsx_file_path = f'data_store/{file_name}.xlsx'
-    work_book = xl.Workbook()
-    work_sheet = work_book.active
+    wb = xl.Workbook()
+    ws = wb.active
     #  Write col headers
     item_ids = list(data.keys())
     print(f'Elements in data: {len(item_ids)} : {item_ids}')
     col_headers = list(data[item_ids[0]].keys())
     print('Col headers:', col_headers)
     # Put headers into xlsx-file
-    work_sheet.append(col_headers)
+    ws.append(col_headers)
     for item_id in item_ids:
         item_dict = data[item_id]
         row = []
         for item in item_dict:
             row.append(item_dict[item])
         # Put data into xlsx-file
-        work_sheet.append(row)
+        ws.append(row)
     # Set styles to headers
-    avito_col_header_style(work_book, work_sheet)
+    avito_col_header_style(wb, ws)
     # Adjust columns width according content
-    xlsx_file_adjust_col_width(work_sheet)
+    xlsx_file_adjust_col_width(ws)
     # Save xlsx-file
-    work_book.save(xlsx_file_path)
-    print(f'Data saved into file {xlsx_file_path}!')
+    wb.save(file_name)
+    print(f'Data saved into file {file_name}!')
+
+
+def append_xlsx_file(data, file_name, page):
+    # Open a xlsx for reading
+    wb = xl.load_workbook(filename=file_name)
+    # Get the current Active Sheet
+    ws = wb.active
+    # You can also select a particular sheet
+    # based on sheet name
+    # ws = wb.get_sheet_by_name("Sheet1")
+
+    # Put data into xlsx-file
+    item_ids = list(data.keys())
+    print(f'Elements in data: {len(item_ids)} : {item_ids}')
+    for item_id in item_ids:
+        item_dict = data[item_id]
+        row = []
+        for item in item_dict:
+            row.append(item_dict[item])
+        # Put data into xlsx-file
+        ws.append(row)
+    # Set styles to headers
+
+    xlsx_file_adjust_col_width(ws)
+    # Save xlsx-file
+    wb.save(file_name)
+    print(f'Data of page {page} saved into file {file_name}!')
 
 
 def xlsx_file_adjust_col_width(work_sheet):
