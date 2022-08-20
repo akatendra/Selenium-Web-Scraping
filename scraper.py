@@ -9,6 +9,11 @@ import logging.config
 # Set up logging
 logging.config.fileConfig("logging.ini", disable_existing_loggers=False)
 logger = logging.getLogger(__name__)
+# Remove from output to the log information from Firefox, where a lot
+# of space is taken up by the server response with the html content
+# of the entire page. Outputting this information to the log greatly increases
+# the size of the log file.
+logging.getLogger('selenium.webdriver.remote.remote_connection').setLevel(logging.WARNING)
 
 
 def get_chrome_browser():

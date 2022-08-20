@@ -85,7 +85,7 @@ if __name__ == "__main__":
 
     current_page = 2
     # Going through the pages and gathering the information we need
-    while current_page <= 5:
+    while current_page <= 3:
         logger.warning(
             '##################################################################')
         logger.warning(f'Scraping page #{current_page}...')
