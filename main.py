@@ -3,6 +3,8 @@ import time
 import scraper
 import xlsx
 import database
+import logging.config
+from selenium.webdriver.common.by import By
 
 
 def spent_time():
@@ -20,18 +22,25 @@ def spent_time():
 
 def run_process(URL, page_number, filename, driver):
     scraper.connect_to_page(browser, URL, page_number)
-    print('Browser opened:', spent_time())
+    logger.warning(f'Browser opened: {spent_time()}')
     time.sleep(2)
     html = driver.page_source
-    print('Page_source received:', spent_time())
+    logger.warning(f'Page_source received: {spent_time()}')
     output_data = scraper.parse_html(html)
-    print('Output_data received:', spent_time())
+    logger.warning(f'Output_data received: {spent_time()}')
     xlsx.append_xlsx_file(output_data, filename, page_number)
     database.write_to_database(output_data)
-    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    # driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    pagination_bar = browser.find_element(By.XPATH,
+                                          '//div[@data-marker="pagination-button"]')
+    driver.execute_script("arguments[0].scrollIntoView();", pagination_bar)
 
 
 if __name__ == "__main__":
+    # Set up logging
+    logging.config.fileConfig("logging.ini", disable_existing_loggers=False)
+    logger = logging.getLogger(__name__)
+
     # Set the values of auxiliary variables
     time_begin = start_time = time.time()
     URL = 'https://www.avito.ru/respublika_krym/kvartiry/prodam/vtorichka'
@@ -39,28 +48,49 @@ if __name__ == "__main__":
     output_timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     output_filename = f'data_store/avito_{output_timestamp}.xlsx'
 
-    print('Start...')
+    logger.warning('Start...')
+
     # Initialize web browser
     browser = scraper.get_firefox_browser()
+
     # Run for first time to get real current URL
-    print(f"Scraping page #{current_page}...")
+
+    logger.warning(
+        '##################################################################')
+    logger.warning(f'Scraping page #{current_page}...')
+    logger.warning(
+        '##################################################################')
+
     scraper.connect_to_page(browser, URL)
-    print('Browser opened:', spent_time())
+
+    logger.warning(f'Browser opened: {spent_time()}')
+
     time.sleep(2)
     html_data = browser.page_source
-    print('Page_source received:', spent_time())
+
+    logger.warning(f'Page_source received: {spent_time()}')
+
     data = scraper.parse_html(html_data)
-    print('Output_data received:', spent_time())
+
+    logger.warning(f'Output_data received: {spent_time()}')
+
     xlsx.write_to_xlsx_file(data, output_filename)
     database.write_to_database(data)
-    browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    # browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    pagination = browser.find_element(By.XPATH,
+                                      '//div[@data-marker="pagination-button"]')
+    browser.execute_script("arguments[0].scrollIntoView();", pagination)
     current_url = browser.current_url
-    print('Current URL:', current_url)
+    logger.warning(f'Current URL: {current_url}')
 
     current_page = 2
     # Going through the pages and gathering the information we need
-    while current_page <= 3:
-        print(f"Scraping page #{current_page}...")
+    while current_page <= 5:
+        logger.warning(
+            '##################################################################')
+        logger.warning(f'Scraping page #{current_page}...')
+        logger.warning(
+            '##################################################################')
         run_process(current_url, current_page, output_filename, browser)
         current_page += 1
 
@@ -74,4 +104,4 @@ if __name__ == "__main__":
         elapsed_time_str = f'| {int(elapsed_minutes)} min {round(elapsed_sec, 1)} sec'
     else:
         elapsed_time_str = f'| {round(elapsed_time, 1)} sec'
-    print(f"Elapsed run time: {elapsed_time_str} seconds")
+    logger.warning(f'Elapsed run time: {elapsed_time_str} seconds')

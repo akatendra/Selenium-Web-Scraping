@@ -1,9 +1,14 @@
 import requests
-import time
 from datetime import timedelta, datetime
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from bs4 import BeautifulSoup
+import logging
+import logging.config
+
+# Set up logging
+logging.config.fileConfig("logging.ini", disable_existing_loggers=False)
+logger = logging.getLogger(__name__)
 
 
 def get_chrome_browser():
@@ -31,7 +36,7 @@ def get_firefox_browser():
     # options.add_argument('headless')
     FIREFOX_PATH = 'd:\\Python\\geckodriver-v0-31-0-win64\\geckodriver.exe'
     service = Service(FIREFOX_PATH)
-    browser = webdriver.Firefox(service=service, options=options)
+    browser = webdriver.Firefox(service=service, options=options, service_log_path=None)
     return browser
 
 
@@ -43,24 +48,55 @@ def connect_to_page(browser, URL, page_number=1):
     browser.get(page_url)
 
 
-
 def convert_date(date):
-    if 'мин' in date:
+    if 'сек' in date:
         date_list = date.split()
-        minutes = int(date_list[0])
-        converted_date = datetime.now() - timedelta(minutes=minutes)
+        sec_str = date_list[0]
+        if sec_str.isdigit():
+            sec = int(date_list[0])
+            converted_date = datetime.now() - timedelta(seconds=sec)
+        else:
+            converted_date = datetime.now()
+    elif 'мин' in date:
+        date_list = date.split()
+        minutes_str = date_list[0]
+        if minutes_str.isdigit():
+            minutes = int(date_list[0])
+            converted_date = datetime.now() - timedelta(minutes=minutes)
+        else:
+            converted_date = datetime.now()
     elif 'час' in date:
         date_list = date.split()
-        hours = int(date_list[0])
-        converted_date = datetime.now() - timedelta(hours=hours)
+        hours_str = date_list[0]
+        if hours_str.isdigit():
+            hours = int(date_list[0])
+            converted_date = datetime.now() - timedelta(hours=hours)
+        else:
+            converted_date = datetime.now()
     elif 'день' or 'дня' or 'дней' in date:
         date_list = date.split()
-        days = int(date_list[0])
-        converted_date = datetime.now() - timedelta(days=days)
+        days_str = date_list[0]
+        if days_str.isdigit():
+            days = int(days_str)
+            converted_date = datetime.now() - timedelta(days=days)
+        else:
+            converted_date = datetime.now()
     elif 'недел' in date:
         date_list = date.split()
-        weeks = int(date_list[0])
-        converted_date = datetime.now() - timedelta(weeks=weeks)
+        weeks_str = date_list[0]
+        if weeks_str.isdigit():
+            weeks = int(date_list[0])
+            converted_date = datetime.now() - timedelta(weeks=weeks)
+        else:
+            converted_date = datetime.now()
+    elif 'мес' in date:
+        date_list = date.split()
+        month_str = date_list[0]
+        if month_str.isdigit():
+            month = int(date_list[0])
+            converted_date = datetime.now() - timedelta(days=30 * month)
+        else:
+            converted_date = datetime.now()
     else:
         converted_date = datetime.now()
     converted_date.strftime("%Y-%m-%d %H:%M")
@@ -71,83 +107,143 @@ def parse_html(html):
     BASE = 'https://www.avito.ru'
     soup = BeautifulSoup(html, 'lxml')
     items = soup.select('div[data-marker="item"]')
-    print('##################################################################')
-    print('items:', len(items))
-    print('##################################################################')
+    logger.warning(
+        '##################################################################')
+    logger.warning(f'items:  {len(items)}')
+    logger.warning(
+        '##################################################################')
     data = {}
     for item in items:
-        data_item_id = int(item['data-item-id'])
-        print('data_item_id:', data_item_id)
-        item_id = item['id']
-        print('item_id:', item_id)
-        item_a = item.select_one('a[data-marker="item-title"]')
-        print('item_a:', item_a)
-        item_url = BASE + item_a['href']
-        print('item_url:', item_url)
-        item_title = item_a.find('h3').text
-        print('item_title:', item_title)
-        item_title_list = item_title.split(',')
-        print('item_title_list:', item_title_list)
-        item_number_of_rooms_list = None
-        item_number_of_rooms = None
-        item_type = None
-        if '-к.' in item_title_list[0]:
-            item_number_of_rooms_list = item_title_list[0].split()
-            print('item_number_of_rooms_list:', item_number_of_rooms_list)
-            item_number_of_rooms_list_len = len(item_number_of_rooms_list)
-            if item_number_of_rooms_list_len == 1:
+        # We intercept the error in case some fields are not filled while
+        # parsing. An error during parsing causes the whole process to stop.
+        # In case of an error, we move on to parsing the next item.
+        try:
+            data_item_id = int(item['data-item-id'])
+            logger.warning(f'data_item_id:  {data_item_id}')
+            item_id = item['id']
+            logger.warning(f'item_id:  {item_id}')
+            item_a = item.select_one('a[data-marker="item-title"]')
+            logger.warning(f'item_a:  {item_a}')
+            item_url = BASE + item_a['href']
+            logger.warning(f'item_url:  {item_url}')
+            item_title = item_a.find('h3').text
+            # Intercepting and processing errors in the title
+            # of the announcement. Check is the title exist or not. There was
+            # a case where the title field was not filled in for some reason,
+            # and it caused a parsing error.
+            if item_title:
+                logger.warning(f'item_title:  {item_title}')
+                item_title_list = item_title.split(',')
+                logger.warning(f'item_title_list:  {item_title_list}')
+                # item_number_of_rooms_list = None
                 item_number_of_rooms = None
-                item_type = item_number_of_rooms_list[0]
-            elif item_number_of_rooms_list_len == 2:
-                item_number_of_rooms = int(
-                    item_number_of_rooms_list[0].replace('-к.', ''))
-                item_type = item_number_of_rooms_list[1]
-            elif item_number_of_rooms_list_len == 3:
-                item_number_of_rooms = int(
-                    item_number_of_rooms_list[1].replace('-к.', ''))
-                item_type = item_number_of_rooms_list[2]
-        else:
-            item_number_of_rooms = None
-            item_type = item_title_list[0]
-        print('item_number_of_rooms:', item_number_of_rooms)
-        print('item_type:', item_type)
-        if len(item_title_list) > 3:
-            item_area = float(
-                (item_title_list[1] + '.' + item_title_list[2]).replace(
-                    '\xa0м²',
-                    ''))
-        else:
-            item_area = int(item_title_list[1].replace('\xa0м²', ''))
-        print('item_area:', item_area)
-        item_floor_house = item_title_list[-1].replace('\xa0эт.', '')
-        print('item_floor_house:', item_floor_house)
-        item_floor_house_list = item_floor_house.split('/')
-        print('item_floor_house_list:', item_floor_house_list)
-        item_floor = int(item_floor_house_list[0].replace(' ', ''))
-        print('item_floor:', item_floor)
-        item_floors_in_house = int(item_floor_house_list[1].replace(' ', ''))
-        print('item_floors_in_house:', item_floors_in_house)
-        item_price_str = item.select_one('span[class*="price-text-"]').text
-        print('item_price_str:', item_price_str)
-        item_price = int(
-            ''.join(char for char in item_price_str if char.isdecimal()))
-        print('item_price:', item_price)
-        item_currency = item.select_one('span[class*="price-currency-"]').text
-        print('item_currency:', item_currency)
-        item_address = item.select_one('span[class*="geo-address-"]').find(
-            'span').text
-        print('item_address:', item_address)
-        item_city = item.select_one('div[class*="geo-georeferences-"]').find(
-            'span').find('span').text
-        # item_city = item_city0.find('span').text
-        print('item_city:', item_city)
-        item_date_data = item.select_one('div[data-marker="item-date"]').text
-        item_date = convert_date(item_date_data)
-        # Remove the fractional part of the seconds after the dot
-        item_date_list = str(item_date).split('.')
-        item_date_str = item_date_list[0]
-        item_date_timestamp = datetime.timestamp(item_date)
-        print('item_date:', item_date)
+                item_type = None
+                if '-к.' in item_title_list[0]:
+                    item_number_of_rooms_list = item_title_list[0].split()
+                    logger.warning(f'item_number_of_rooms_list: {item_number_of_rooms_list}')
+                    item_number_of_rooms_list_len = len(
+                        item_number_of_rooms_list)
+                    # If the number of rooms is not specified (Апартаменты,
+                    # Апартаменты-студия, Квартира-студия, Апартаменты-студия,
+                    # Своб. планировка
+                    if item_number_of_rooms_list_len == 1:
+                        item_number_of_rooms = None
+                        item_type = item_number_of_rooms_list[0].lower()
+                    # Стандартный вариант в большинстве случаев
+                    elif item_number_of_rooms_list_len == 2:
+                        item_number_of_rooms = int(
+                            item_number_of_rooms_list[0].replace('-к.', ''))
+                        item_type = item_number_of_rooms_list[1]
+                    # There was a variant when the number of rooms was preceded
+                    # by the word: Аукцион:
+                    elif item_number_of_rooms_list_len == 3:
+                        item_number_of_rooms = int(
+                            item_number_of_rooms_list[1].replace('-к.', ''))
+                        item_type = item_number_of_rooms_list[2]
+                else:
+                    item_number_of_rooms = None
+                    item_type = item_title_list[0].lower()
+                logger.warning(f'item_number_of_rooms:  {item_number_of_rooms}')
+                logger.warning(f'item_type:  {item_type}')
+
+                # Getting an apartment area
+                if len(item_title_list) > 3:
+                    item_area = float(
+                        (item_title_list[1] + '.' + item_title_list[
+                            2]).replace(
+                            '\xa0м²',
+                            ''))
+                else:
+                    item_area = int(item_title_list[1].replace('\xa0м\xb2', ''))
+                logger.warning(f'item_area:  {item_area}')
+
+                # Getting the floor on which the apartment is located and the
+                # number of floors of the building
+                item_floor_house = item_title_list[-1].replace('\xa0эт.',
+                                                               '').strip()
+                logger.warning(f'item_floor_house:  {item_floor_house}')
+                item_floor_house_list = item_floor_house.split('/')
+                logger.warning(f'item_floor_house_list: {item_floor_house_list}')
+                item_floor = int(item_floor_house_list[0].replace(' ', ''))
+                logger.warning(f'item_floor:  {item_floor}')
+                item_floors_in_house = int(
+                    item_floor_house_list[1].replace(' ', ''))
+                logger.warning(f'item_floors_in_house:  {item_floors_in_house}')
+            else:
+                item_title = None
+                item_type = None
+                item_number_of_rooms = None
+                item_area = None
+                item_floor_house = None
+                item_floor = None
+                item_floors_in_house = None
+
+            # Getting an item price.
+            item_price_str = item.select_one('span[class*="price-text-"]').text
+            logger.warning(f'item_price_str:  {item_price_str}')
+            item_price = int(
+                ''.join(char for char in item_price_str if char.isdecimal()))
+            logger.warning(f'item_price:  {item_price}')
+
+            # Getting an item price currency.
+            item_currency = item.select_one(
+                'span[class*="price-currency-"]').text
+            logger.warning(f'item_currency:  {item_currency}')
+
+            # Getting an item address.
+            item_geo_address = item.select_one('span[class*="geo-address-"]')
+            if item_geo_address:
+                item_address = item_geo_address.find('span').text
+            else:
+                item_address = None
+            logger.warning(f'item_address:  {item_address}')
+
+            # Getting an item city.
+            item_geo_georeferences = item.select_one(
+                'div[class*="geo-georeferences-"]')
+            if item_geo_georeferences:
+                item_city = item_geo_georeferences.find('span').find(
+                    'span').text
+            else:
+                item_city = None
+            logger.warning(f'item_city:  {item_city}')
+
+            # Getting an item publishing date.
+            item_date_data = item.select_one(
+                'div[data-marker="item-date"]').text
+            # Convert '2 дня назад' or '5 минут назад' in normal calendar date.
+            item_date = convert_date(item_date_data)
+            # Remove the fractional part of the seconds after the dot and make
+            # date as string just in case for SQLite
+            item_date_list = str(item_date).split('.')
+            item_date_str = item_date_list[0]
+            # Getting a timestamp just in case
+            item_date_timestamp = datetime.timestamp(item_date)
+            logger.warning(f'item_date:  {item_date}')
+        except Exception as err:
+            logging.exception('Exception occurred')
+            continue
+        # data writing into a dictionary.
         item_dict = {'data_item_id': data_item_id,
                      'item_id': item_id,
                      'item_url': item_url,
@@ -166,9 +262,12 @@ def parse_html(html):
                      'item_date_timestamp': item_date_timestamp,
                      'item_date_str': item_date_str
                      }
+        # Put data dictionary as 'value' in new dictionary
+        # with item_id as 'key'.
         data[item_id] = item_dict
-        print('##############################################################')
-    print('items:', len(data), data)
+        logger.warning(
+            '##############################################################')
+    logger.warning(f'items: {len(data)}')
     return data
 
 
@@ -185,6 +284,6 @@ def get_load_time(item_url):
         # получаем время загрузки страницы
         load_time = response.elapsed.total_seconds()
     except Exception as e:
-        print(e)
+        logger.warning(e)
         load_time = "Loading Error"
     return load_time

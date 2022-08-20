@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 
-# NOT WORKING FOR AVITO.RU!!! SHOW PAGE STATUS CODE 403: FORBIDDEN #
+# DOES NOT WORK FOR AVITO.RU!!! SHOW PAGE STATUS CODE 403: FORBIDDEN #
 URL = 'https://www.avito.ru/respublika_krym/kvartiry/prodam/vtorichka'
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:97.0) Gecko/20100101 Firefox/97.0'
 headers = {"user-agent": USER_AGENT}

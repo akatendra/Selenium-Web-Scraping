@@ -1,6 +1,11 @@
 import openpyxl as xl
-from openpyxl.styles import NamedStyle, Font, Alignment, PatternFill, Border, \
-    Side
+from openpyxl.styles import NamedStyle, Font, Alignment, Border, Side
+import logging
+import logging.config
+
+# Set up logging
+logging.config.fileConfig("logging.ini", disable_existing_loggers=False)
+logger = logging.getLogger(__name__)
 
 
 def write_to_xlsx_file(data, file_name):
@@ -8,9 +13,9 @@ def write_to_xlsx_file(data, file_name):
     ws = wb.active
     #  Write col headers
     item_ids = list(data.keys())
-    print(f'Elements in data: {len(item_ids)} : {item_ids}')
+    logging.getLogger(f'Elements in data: {len(item_ids)} : {item_ids}')
     col_headers = list(data[item_ids[0]].keys())
-    print('Col headers:', col_headers)
+    logging.getLogger(f'Col headers: {col_headers}')
     # Put headers into xlsx-file
     ws.append(col_headers)
     for item_id in item_ids:
@@ -26,7 +31,7 @@ def write_to_xlsx_file(data, file_name):
     xlsx_file_adjust_col_width(ws)
     # Save xlsx-file
     wb.save(file_name)
-    print(f'Data saved into file {file_name}!')
+    logging.getLogger(f'Data saved into file {file_name}!')
 
 
 def append_xlsx_file(data, file_name, page):
@@ -40,7 +45,7 @@ def append_xlsx_file(data, file_name, page):
 
     # Put data into xlsx-file
     item_ids = list(data.keys())
-    print(f'Elements in data: {len(item_ids)} : {item_ids}')
+    logging.getLogger(f'Elements in data: {len(item_ids)}')
     for item_id in item_ids:
         item_dict = data[item_id]
         row = []
@@ -53,7 +58,7 @@ def append_xlsx_file(data, file_name, page):
     xlsx_file_adjust_col_width(ws)
     # Save xlsx-file
     wb.save(file_name)
-    print(f'Data of page {page} saved into file {file_name}!')
+    logging.getLogger(f'Data of page {page} saved into file {file_name}!')
 
 
 def xlsx_file_adjust_col_width(work_sheet):
