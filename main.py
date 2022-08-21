@@ -26,7 +26,7 @@ def run_process(URL, page_number, filename, driver):
     time.sleep(2)
     html = driver.page_source
     logger.warning(f'Page_source received: {spent_time()}')
-    output_data = scraper.parse_html(html)
+    output_data = scraper.parse_html_kvartiry_vtorichka(html)
     logger.warning(f'Output_data received: {spent_time()}')
     xlsx.append_xlsx_file(output_data, filename, page_number)
     database.write_to_database(output_data)
@@ -70,7 +70,7 @@ if __name__ == "__main__":
 
     logger.warning(f'Page_source received: {spent_time()}')
 
-    data = scraper.parse_html(html_data)
+    data = scraper.parse_html_kvartiry_vtorichka(html_data)
 
     logger.warning(f'Output_data received: {spent_time()}')
 
@@ -85,7 +85,7 @@ if __name__ == "__main__":
 
     current_page = 2
     # Going through the pages and gathering the information we need
-    while current_page <= 3:
+    while current_page <= 10:
         logger.warning(
             '##################################################################')
         logger.warning(f'Scraping page #{current_page}...')
