@@ -5,6 +5,8 @@ import xlsx
 import database
 import logging.config
 from selenium.webdriver.common.by import By
+from concurrent.futures import ThreadPoolExecutor, wait
+from random import randint
 
 
 def spent_time():
@@ -20,20 +22,59 @@ def spent_time():
     return time_str
 
 
-def run_process(URL, page_number, filename, driver):
-    scraper.connect_to_page(browser, URL, page_number)
-    logger.warning(f'Browser opened: {spent_time()}')
-    time.sleep(2)
-    html = driver.page_source
-    logger.warning(f'Page_source received: {spent_time()}')
+def sleep_time(max_sec):
+    rand_time = randint(1, max_sec)
+    time.sleep(rand_time)
+
+
+def run_flow(start_page, end_page):
+    global URL
+    # Initialize web browser
+    browser = scraper.get_firefox_browser()
+    scraper.connect_to_page(browser, URL, start_page)
+    logger.debug(
+        f'Browser for pages {start_page}-{end_page} opened: {spent_time()}')
+    # Wait random seconds
+    sleep_time(5)
+    current_page = start_page
+    while current_page <= end_page:
+        logger.debug(f'Take in work page: {current_page}')
+        page_url = f'{URL}?p={current_page}'
+        browser.get(page_url)
+        page_processing(current_page, browser)
+        current_page += 1
+
+    # Stop script
+    browser.quit()
+
+
+def page_processing(page_number, browser):
+    global output_filename
+    logger.debug(
+        '##################################################################')
+    logger.debug(f'Scraping page #{page_number}...')
+    logger.debug(
+        '##################################################################')
+    html = browser.page_source
+    logger.debug(f'Page_source of page {page_number} received: {spent_time()}')
     output_data = scraper.parse_html_kvartiry_vtorichka(html)
-    logger.warning(f'Output_data received: {spent_time()}')
-    xlsx.append_xlsx_file(output_data, filename, page_number)
+    logger.debug(f'Output_data of page {page_number} received: {spent_time()}')
+    xlsx.append_xlsx_file(output_data, output_filename, page_number)
     database.write_to_database(output_data)
+
+    # Go to pagination bar to simulate human behavior
     # driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
     pagination_bar = browser.find_element(By.XPATH,
                                           '//div[@data-marker="pagination-button"]')
-    driver.execute_script("arguments[0].scrollIntoView();", pagination_bar)
+    browser.execute_script("arguments[0].scrollIntoView();", pagination_bar)
+
+    # Close the browser to free up computer memory
+    # browser.quit()
+    # logger.debug(f'Browser for page {page_number} closed: {spent_time()}')
+
+    current_url = browser.current_url
+    logger.debug(f'Current URL in run_process: {current_url}')
+    return current_url
 
 
 if __name__ == "__main__":
@@ -41,61 +82,71 @@ if __name__ == "__main__":
     logging.config.fileConfig("logging.ini", disable_existing_loggers=False)
     logger = logging.getLogger(__name__)
 
-    # Set the values of auxiliary variables
+    # Set the variables values
     time_begin = start_time = time.time()
-    URL = 'https://www.avito.ru/respublika_krym/kvartiry/prodam/vtorichka'
+    URL = 'https://www.avito.ru/respublika_krym/kvartiry/prodam/vtorichka-ASgBAQICAUSSA8YQAUDmBxSMUg'
     current_page = 1
+    last_page = 100
     output_timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     output_filename = f'data_store/avito_{output_timestamp}.xlsx'
+    # End of variables values setting
 
-    logger.warning('Start...')
+    logger.info('Start...')
 
-    # Initialize web browser
-    browser = scraper.get_firefox_browser()
+    pages = [(1, 18), (19, 41), (42, 59), (60, 78), (79, 100)]
 
-    # Run for first time to get real current URL
+    # # Adding multithreading
+    futures = []
+    with ThreadPoolExecutor() as executor:
+        for page in pages:
+            futures.append(executor.submit(run_flow, page[0], page[1]))
+            # Wait random seconds
+            sleep_time(10)
+            logger.debug(f'ThreadPoolExecutor take in work pages: {page[0]}-{page[1]}')
+    # Wait for ending of all running processes
+    wait(futures)
+    # End of multithreading
 
-    logger.warning(
-        '##################################################################')
-    logger.warning(f'Scraping page #{current_page}...')
-    logger.warning(
-        '##################################################################')
 
-    scraper.connect_to_page(browser, URL)
-
-    logger.warning(f'Browser opened: {spent_time()}')
-
-    time.sleep(2)
-    html_data = browser.page_source
-
-    logger.warning(f'Page_source received: {spent_time()}')
-
-    data = scraper.parse_html_kvartiry_vtorichka(html_data)
-
-    logger.warning(f'Output_data received: {spent_time()}')
-
-    xlsx.write_to_xlsx_file(data, output_filename)
-    database.write_to_database(data)
-    # browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-    pagination = browser.find_element(By.XPATH,
-                                      '//div[@data-marker="pagination-button"]')
-    browser.execute_script("arguments[0].scrollIntoView();", pagination)
-    current_url = browser.current_url
-    logger.warning(f'Current URL: {current_url}')
-
-    current_page = 2
-    # Going through the pages and gathering the information we need
-    while current_page <= 10:
-        logger.warning(
-            '##################################################################')
-        logger.warning(f'Scraping page #{current_page}...')
-        logger.warning(
-            '##################################################################')
-        run_process(current_url, current_page, output_filename, browser)
-        current_page += 1
+    # # Не работает!!! Такое ощущение что сервер банит
+    # # Going through the pages and gathering the information we need
+    # while current_page <= last_page:
+    #     for _ in range(page_batch):
+    #         if current_page <= last_page:
+    #             run_process(current_url, current_page, output_filename, browser)
+    #             logger.debug(f'Take in work page: {current_page}')
+    #             current_page += 1
+    #         else:
+    #             break
+    #         current_page += 1
+    #
+    #
+    #
+    #
+    # # Multithreading не работает!!! Такое ощущение что сервер банит
+    # # Adding multithreading
+    # futures = []
+    # with ThreadPoolExecutor() as executor:
+    #     while current_page <= last_page:
+    #         for _ in range(page_batch):
+    #             if current_page <= last_page:
+    #                 futures.append(executor.submit(run_process, current_url, current_page, output_filename))
+    #                 logger.debug(f'ThreadPoolExecutor take in work page: {current_page}')
+    #             else:
+    #                 break
+    #             current_page += 1
+    #         # Wait for ending of all running processes
+    #         wait(futures)
+    #         # Clear list of running processes
+    #         futures.clear()
+    #         logger.debug(f'ThreadPoolExecutor finished processing a batch of pages. Current page: {current_page}')
+    #
+    # # Wait for ending of all running processes
+    # wait(futures)
+    # # End of multithreading
 
     # Stop script
-    browser.quit()
+    # browser.quit()
     time_end = time.time()
     elapsed_time = time_end - time_begin
     if elapsed_time > 60:
@@ -104,4 +155,4 @@ if __name__ == "__main__":
         elapsed_time_str = f'| {int(elapsed_minutes)} min {round(elapsed_sec, 1)} sec'
     else:
         elapsed_time_str = f'| {round(elapsed_time, 1)} sec'
-    logger.warning(f'Elapsed run time: {elapsed_time_str} seconds')
+    logger.info(f'Elapsed run time: {elapsed_time_str} seconds')

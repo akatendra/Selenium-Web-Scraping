@@ -2,6 +2,7 @@ import requests
 from datetime import timedelta, datetime
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.firefox.options import Options
 from bs4 import BeautifulSoup
 import logging
 import logging.config
@@ -38,9 +39,9 @@ def get_chrome_browser():
 
 
 def get_firefox_browser():
-    options = webdriver.FirefoxOptions()
+    options = Options()
     #  Will launch browser without UI(headless)
-    # options.add_argument('headless')
+    # options.headless = True
     FIREFOX_PATH = 'd:\\Python\\geckodriver-v0-31-0-win64\\geckodriver.exe'
     service = Service(FIREFOX_PATH)
     browser = webdriver.Firefox(service=service, options=options, service_log_path=None)
@@ -53,6 +54,9 @@ def connect_to_page(browser, URL, page_number=1):
     else:
         page_url = f'{URL}?p={page_number}'
     browser.get(page_url)
+    current_url = browser.current_url
+    logger.debug(f'Current URL in connect_to_page: {current_url}')
+    return current_url
 
 
 def convert_date(date):
@@ -113,45 +117,53 @@ def parse_html_kvartiry_vtorichka(html):
     BASE = 'https://www.avito.ru'
     soup = BeautifulSoup(html, 'lxml')
     items = soup.select('div[data-marker="item"]')
-    logger.warning(
+    logger.debug(
         '##################################################################')
-    logger.warning(f'items:  {len(items)}')
-    logger.warning(
+    logger.debug(f'Number of items founded on page:  {len(items)}')
+    logger.debug(
         '##################################################################')
     data = {}
     # Get items_ids which are in database already
     item_ids_from_db = database.get_item_ids()
+    logger.debug(f'Number of item_ids are already exist in database: {len(item_ids_from_db)}')
     for item in items:
         # We intercept the error in case some fields are not filled while
         # parsing. An error during parsing causes the whole process to stop.
         # In case of an error, we move on to parsing the next item.
         try:
             item_id = item['id']
-            logger.warning(f'item_id:  {item_id}')
+            logger.debug(f'Detected item_id:  {item_id}')
             if item_id in item_ids_from_db:
+                logger.debug(f'Detected item_id is already exist in database: {item_id} | Skipped...')
+                logger.debug(
+                    '##############################################################')
                 continue
             else:
+                logger.debug(
+                    f'Detected item_id is taken in work: {item_id}')
+                logger.debug(
+                    '^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^')
                 data_item_id = int(item['data-item-id'])
-                logger.warning(f'data_item_id:  {data_item_id}')
+                logger.debug(f'data_item_id:  {data_item_id}')
                 item_a = item.select_one('a[data-marker="item-title"]')
-                logger.warning(f'item_a:  {item_a}')
+                logger.debug(f'item_a:  {item_a}')
                 item_url = BASE + item_a['href']
-                logger.warning(f'item_url:  {item_url}')
+                logger.debug(f'item_url:  {item_url}')
                 item_title = item_a.find('h3').text
                 # Intercepting and processing errors in the title
                 # of the announcement. Check is the title exist or not. There was
                 # a case where the title field was not filled in for some reason,
                 # and it caused a parsing error.
                 if item_title:
-                    logger.warning(f'item_title:  {item_title}')
+                    logger.debug(f'item_title:  {item_title}')
                     item_title_list = item_title.split(',')
-                    logger.warning(f'item_title_list:  {item_title_list}')
+                    logger.debug(f'item_title_list:  {item_title_list}')
                     # item_number_of_rooms_list = None
                     item_number_of_rooms = None
                     item_type = None
                     if '-к.' in item_title_list[0]:
                         item_number_of_rooms_list = item_title_list[0].split()
-                        logger.warning(f'item_number_of_rooms_list: {item_number_of_rooms_list}')
+                        logger.debug(f'item_number_of_rooms_list: {item_number_of_rooms_list}')
                         item_number_of_rooms_list_len = len(
                             item_number_of_rooms_list)
                         # If the number of rooms is not specified (Апартаменты,
@@ -174,8 +186,8 @@ def parse_html_kvartiry_vtorichka(html):
                     else:
                         item_number_of_rooms = None
                         item_type = item_title_list[0].lower()
-                    logger.warning(f'item_number_of_rooms:  {item_number_of_rooms}')
-                    logger.warning(f'item_type:  {item_type}')
+                    logger.debug(f'item_number_of_rooms:  {item_number_of_rooms}')
+                    logger.debug(f'item_type:  {item_type}')
 
                     # Getting an apartment area
                     if len(item_title_list) > 3:
@@ -186,20 +198,20 @@ def parse_html_kvartiry_vtorichka(html):
                                 ''))
                     else:
                         item_area = int(item_title_list[1].replace('\xa0м\xb2', ''))
-                    logger.warning(f'item_area:  {item_area}')
+                    logger.debug(f'item_area:  {item_area}')
 
                     # Getting the floor on which the apartment is located and the
                     # number of floors of the building
                     item_floor_house = item_title_list[-1].replace('\xa0эт.',
                                                                    '').strip()
-                    logger.warning(f'item_floor_house:  {item_floor_house}')
+                    logger.debug(f'item_floor_house:  {item_floor_house}')
                     item_floor_house_list = item_floor_house.split('/')
-                    logger.warning(f'item_floor_house_list: {item_floor_house_list}')
+                    logger.debug(f'item_floor_house_list: {item_floor_house_list}')
                     item_floor = int(item_floor_house_list[0].replace(' ', ''))
-                    logger.warning(f'item_floor:  {item_floor}')
+                    logger.debug(f'item_floor:  {item_floor}')
                     item_floors_in_house = int(
                         item_floor_house_list[1].replace(' ', ''))
-                    logger.warning(f'item_floors_in_house:  {item_floors_in_house}')
+                    logger.debug(f'item_floors_in_house:  {item_floors_in_house}')
                 else:
                     item_title = None
                     item_type = None
@@ -211,15 +223,15 @@ def parse_html_kvartiry_vtorichka(html):
 
                 # Getting an item price.
                 item_price_str = item.select_one('span[class*="price-text-"]').text
-                logger.warning(f'item_price_str:  {item_price_str}')
+                logger.debug(f'item_price_str:  {item_price_str}')
                 item_price = int(
                     ''.join(char for char in item_price_str if char.isdecimal()))
-                logger.warning(f'item_price:  {item_price}')
+                logger.debug(f'item_price:  {item_price}')
 
                 # Getting an item price currency.
                 item_currency = item.select_one(
                     'span[class*="price-currency-"]').text
-                logger.warning(f'item_currency:  {item_currency}')
+                logger.debug(f'item_currency:  {item_currency}')
 
                 # Getting an item address.
                 item_geo_address = item.select_one('span[class*="geo-address-"]')
@@ -227,7 +239,7 @@ def parse_html_kvartiry_vtorichka(html):
                     item_address = item_geo_address.find('span').text
                 else:
                     item_address = None
-                logger.warning(f'item_address:  {item_address}')
+                logger.debug(f'item_address:  {item_address}')
 
                 # Getting an item city.
                 item_geo_georeferences = item.select_one(
@@ -237,14 +249,14 @@ def parse_html_kvartiry_vtorichka(html):
                         'span').text
                 else:
                     item_city = None
-                logger.warning(f'item_city:  {item_city}')
+                logger.debug(f'item_city:  {item_city}')
 
                 # Getting an item publishing date.
                 item_date_data = item.select_one(
                     'div[data-marker="item-date"]').text
                 # Convert '2 дня назад' or '5 минут назад' in normal calendar date.
                 item_date = convert_date(item_date_data)
-                logger.warning(f'item_date:  {item_date.strftime("%Y-%m-%d %H:%M")}')
+                logger.debug(f'item_date:  {item_date.strftime("%Y-%m-%d %H:%M")}')
                 item_add_date = datetime.now()
         except Exception as err:
             logging.exception('Exception occurred during parsing!')
@@ -271,25 +283,8 @@ def parse_html_kvartiry_vtorichka(html):
         # Put data dictionary as 'value' in new dictionary
         # with item_id as 'key'.
         data[item_id] = item_dict
-        logger.warning(
+        logger.debug(
             '##############################################################')
-    logger.warning(f'items: {len(data)}')
+    logger.debug(f'New items detected during parse: {len(data)}')
+    logger.debug('##############################################################')
     return data
-
-
-def get_load_time(item_url):
-    try:
-        # устанавливаем значения заголовков запроса
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.89 Safari/537.36"
-        }
-        # делаем запрос по url статьи article_url
-        response = requests.get(
-            item_url, headers=headers, stream=True, timeout=3.000
-        )
-        # получаем время загрузки страницы
-        load_time = response.elapsed.total_seconds()
-    except Exception as e:
-        logger.warning(e)
-        load_time = "Loading Error"
-    return load_time

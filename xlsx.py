@@ -1,3 +1,4 @@
+import os
 import openpyxl as xl
 from openpyxl.styles import NamedStyle, Font, Alignment, Border, Side
 import logging
@@ -35,30 +36,34 @@ def write_to_xlsx_file(data, file_name):
 
 
 def append_xlsx_file(data, file_name, page):
-    # Open a xlsx for reading
-    wb = xl.load_workbook(filename=file_name)
-    # Get the current Active Sheet
-    ws = wb.active
-    # You can also select a particular sheet
-    # based on sheet name
-    # ws = wb.get_sheet_by_name("Sheet1")
+    # Check if file exist
+    if not os.path.isfile(file_name):
+        write_to_xlsx_file(data, file_name)
+    else:
+        # Open a xlsx for reading
+        wb = xl.load_workbook(filename=file_name)
+        # Get the current Active Sheet
+        ws = wb.active
+        # You can also select a particular sheet
+        # based on sheet name
+        # ws = wb.get_sheet_by_name("Sheet1")
 
-    # Put data into xlsx-file
-    item_ids = list(data.keys())
-    logging.getLogger(f'Elements in data: {len(item_ids)}')
-    for item_id in item_ids:
-        item_dict = data[item_id]
-        row = []
-        for item in item_dict:
-            row.append(item_dict[item])
         # Put data into xlsx-file
-        ws.append(row)
-    # Set styles to headers
+        item_ids = list(data.keys())
+        logging.getLogger(f'Elements in data: {len(item_ids)}')
+        for item_id in item_ids:
+            item_dict = data[item_id]
+            row = []
+            for item in item_dict:
+                row.append(item_dict[item])
+            # Put data into xlsx-file
+            ws.append(row)
+        # Set styles to headers
 
-    xlsx_file_adjust_col_width(ws)
-    # Save xlsx-file
-    wb.save(file_name)
-    logging.getLogger(f'Data of page {page} saved into file {file_name}!')
+        xlsx_file_adjust_col_width(ws)
+        # Save xlsx-file
+        wb.save(file_name)
+        logging.getLogger(f'Data of page {page} saved into file {file_name}!')
 
 
 def xlsx_file_adjust_col_width(work_sheet):

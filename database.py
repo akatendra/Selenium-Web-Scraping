@@ -44,22 +44,22 @@ def create_main_table():
                             item_add_date TIMESTAMP
                             );'''
     execute_sql_query(sql_create_main_table)
-    logger.warning('Main table created!')
+    logger.info('Main table created!')
 
 
 def get_item_ids():
     sql_get_item_ids = 'SELECT item_id FROM items;'
-    logger.warning('Items_ids received!')
     item_ids = execute_sql_query(sql_get_item_ids)
     item_ids_tuple = set((item[0] for item in item_ids))
+    logger.debug(f'Items_ids tuple received: {len(item_ids_tuple)}')
     return item_ids_tuple
 
 
 def get_item_ids_list():
     sql_get_item_ids = 'SELECT item_id FROM items;'
-    logger.warning('Items_ids received!')
     item_ids = execute_sql_query(sql_get_item_ids)
     item_ids = list((item[0] for item in item_ids))
+    logger.debug(f'Items_ids list received: {len(item_ids)}')
     return item_ids
 
 
@@ -86,22 +86,22 @@ def write_to_database(data):
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
                    '''
     item_ids = set(data.keys())
-    # logger.warning(f'{type(item_ids)}, {len(item_ids)}, {item_ids}')
+    # logger.debug(f'{type(item_ids)}, {len(item_ids)}, {item_ids}')
     item_ids_database = get_item_ids()
     item_ids_to_write = item_ids.difference(item_ids_database)
     for item_id in item_ids_to_write:
-        # logger.warning(f'item_id: {item_id}')
+        # logger.debug(f'item_id: {item_id}')
         data_tuple = tuple((item_data for item_data in data[item_id].values()))
-        # logger.warning(f'{type(data_tuple)}, {data_tuple}')
+        # logger.debug(f'{type(data_tuple)}, {data_tuple}')
         execute_sql_query(sql_put_data, data_tuple)
-    logger.warning('Data saved into database!')
+    logger.info('Data saved into database!')
 
 
 def duplicates_check():
     item_ids = get_item_ids()
-    logger.warning(f'{type(item_ids)}, {len(item_ids)}, {item_ids}')
+    logger.debug(f'{type(item_ids)}, {len(item_ids)}, {item_ids}')
     item_ids_list = get_item_ids_list()
-    logger.warning(
+    logger.debug(
         f'{type(item_ids_list)}, {len(item_ids_list)}, {item_ids_list}')
 
 
