@@ -1,4 +1,3 @@
-import requests
 from datetime import timedelta, datetime
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -67,7 +66,7 @@ def convert_date(date):
             sec = int(date_list[0])
             converted_date = datetime.now() - timedelta(seconds=sec)
         else:
-            converted_date = datetime.now()
+            converted_date = None
     elif 'мин' in date:
         date_list = date.split()
         minutes_str = date_list[0]
@@ -75,7 +74,7 @@ def convert_date(date):
             minutes = int(date_list[0])
             converted_date = datetime.now() - timedelta(minutes=minutes)
         else:
-            converted_date = datetime.now()
+            converted_date = None
     elif 'час' in date:
         date_list = date.split()
         hours_str = date_list[0]
@@ -83,7 +82,7 @@ def convert_date(date):
             hours = int(date_list[0])
             converted_date = datetime.now() - timedelta(hours=hours)
         else:
-            converted_date = datetime.now()
+            converted_date = None
     elif 'день' or 'дня' or 'дней' in date:
         date_list = date.split()
         days_str = date_list[0]
@@ -91,7 +90,7 @@ def convert_date(date):
             days = int(days_str)
             converted_date = datetime.now() - timedelta(days=days)
         else:
-            converted_date = datetime.now()
+            converted_date = None
     elif 'недел' in date:
         date_list = date.split()
         weeks_str = date_list[0]
@@ -99,7 +98,7 @@ def convert_date(date):
             weeks = int(date_list[0])
             converted_date = datetime.now() - timedelta(weeks=weeks)
         else:
-            converted_date = datetime.now()
+            converted_date = None
     elif 'мес' in date:
         date_list = date.split()
         month_str = date_list[0]
@@ -107,9 +106,9 @@ def convert_date(date):
             month = int(date_list[0])
             converted_date = datetime.now() - timedelta(days=30 * month)
         else:
-            converted_date = datetime.now()
+            converted_date = None
     else:
-        converted_date = datetime.now()
+        converted_date = None
     return converted_date
 
 

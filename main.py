@@ -1,7 +1,6 @@
 from datetime import datetime
 import time
 import scraper
-import xlsx
 import database
 import logging.config
 from selenium.webdriver.common.by import By
@@ -27,11 +26,9 @@ def sleep_time(max_sec):
     time.sleep(rand_time)
 
 
-def run_flow(URL, start_page, end_page):
-    global browsers
+def run_flow_kvartiry_vtorichka(URL, start_page, end_page):
     # Initialize web browser
     browser = scraper.get_firefox_browser()
-    browsers.append(browser)
     scraper.connect_to_page(browser, URL, start_page)
     logger.debug(
         f'Browser for pages {URL} | {start_page}-{end_page} opened: {spent_time()}')
@@ -42,14 +39,14 @@ def run_flow(URL, start_page, end_page):
         logger.debug(f'Take in work page: {current_page}')
         page_url = f'{URL}?p={current_page}'
         browser.get(page_url)
-        page_processing(current_page, browser)
+        page_processing_kvartiry_vtorichka(current_page, browser)
         current_page += 1
 
     # Stop script
     browser.quit()
 
 
-def page_processing(page_number, browser):
+def page_processing_kvartiry_vtorichka(page_number, browser):
     global output_filename
     logger.debug(
         '##################################################################')
@@ -60,7 +57,7 @@ def page_processing(page_number, browser):
     logger.debug(f'Page_source of page {page_number} received: {spent_time()}')
     output_data = scraper.parse_html_kvartiry_vtorichka(html)
     logger.debug(f'Output_data of page {page_number} received: {spent_time()}')
-    xlsx.append_xlsx_file(output_data, output_filename, page_number)
+    # xlsx.append_xlsx_file(output_data, output_filename, page_number)
     database.write_to_db_kvartiry_vtorichka(output_data)
 
     # Go to pagination bar to simulate human behavior
@@ -76,11 +73,10 @@ def page_processing(page_number, browser):
 
 def run_flow_kvartiry_novostroyka(URL, start_page, end_page):
     # Initialize web browser
-    browser = next(browser_gen)
-    # browser = scraper.get_firefox_browser()
-    # scraper.connect_to_page(browser, URL, start_page)
-    # logger.debug(
-    #     f'Browser for pages {URL} | {start_page}-{end_page} opened: {spent_time()}')
+    browser = scraper.get_firefox_browser()
+    scraper.connect_to_page(browser, URL, start_page)
+    logger.debug(
+        f'Browser for pages {URL} | {start_page}-{end_page} opened: {spent_time()}')
     # Wait random seconds
     sleep_time(5)
     current_page = start_page
@@ -118,6 +114,19 @@ def page_processing_kvartiry_novostroyka(page_number, browser):
     return current_url
 
 
+def thread_pool(func, url, pages):
+    futures = []
+    with ThreadPoolExecutor() as executor:
+        for page in pages:
+            futures.append(
+                executor.submit(func, url, page[0], page[1]))
+            # Wait random seconds
+            sleep_time(10)
+            logger.debug(
+                f'ThreadPoolExecutor take in work pages: {url} | {page[0]}-{page[1]}')
+    # Wait for ending of all running processes
+    wait(futures)
+
 if __name__ == "__main__":
     # Set up logging
     logging.config.fileConfig("logging.ini", disable_existing_loggers=False)
@@ -130,51 +139,24 @@ if __name__ == "__main__":
     current_page = 1
     last_page = 100
     output_timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    output_filename = f'data_store/avito_{output_timestamp}.xlsx'
+    # output_filename = f'data_store/avito_{output_timestamp}.xlsx'
     browsers = []
     # End of variables values setting
 
     logger.info('Start...')
 
     # Adding multithreading
+
+    # kvartiry_vtorichka
     pages = [(1, 14), (15, 32), (33, 48), (49, 63), (64, 82), (83, 100)]
 
-    futures = []
-    with ThreadPoolExecutor() as executor:
-        for page in pages:
-            futures.append(
-                executor.submit(run_flow, url_kvartiry_vtorichka, page[0],
-                                page[1]))
-            # Wait random seconds
-            sleep_time(10)
-            logger.debug(
-                f'ThreadPoolExecutor take in work pages: {url_kvartiry_vtorichka} | {page[0]}-{page[1]}')
-    # Wait for ending of all running processes
-    wait(futures)
-    # End of multithreading
-
-    # Create generator for taking browser
-    logger.debug(f'browsers: {browsers}')
-    browser_gen = (browser for browser in browsers)
+    # thread_pool(run_flow_kvartiry_vtorichka, url_kvartiry_vtorichka, pages)
 
     # kvartiry_novostroyka
     pages.clear()
     pages = [(1, 9), (10, 17), (18, 23), (24, 32), (33, 41), (42, 47)]
 
-    futures_kvartiry_novostroyka = []
-    with ThreadPoolExecutor() as executor:
-        for page in pages:
-            futures_kvartiry_novostroyka.append(
-                executor.submit(run_flow_kvartiry_novostroyka,
-                                url_kvartiry_novostroyka, page[0],
-                                page[1]))
-            # Wait random seconds
-            sleep_time(10)
-            logger.debug(
-                f'ThreadPoolExecutor take in work pages: {url_kvartiry_novostroyka} | {page[0]}-{page[1]}')
-    # Wait for ending of all running processes
-    wait(futures_kvartiry_novostroyka)
-    # End of kvartiry_novostroyka
+    thread_pool(run_flow_kvartiry_novostroyka, url_kvartiry_novostroyka, pages)
 
     time_end = time.time()
     elapsed_time = time_end - time_begin
