@@ -116,12 +116,16 @@ def write_to_db_kvartiry_vtorichka(data):
     item_ids = set(data.keys())
     # logger.debug(f'{type(item_ids)}, {len(item_ids)}, {item_ids}')
     item_ids_database = get_item_ids(table)
-    item_ids_to_write = item_ids.difference(item_ids_database)
-    for item_id in item_ids_to_write:
+    # item_ids_to_write = item_ids.difference(item_ids_database)
+    # for item_id in item_ids_to_write:
+    for item_id in item_ids:
         # logger.debug(f'item_id: {item_id}')
-        data_tuple = tuple((item_data for item_data in data[item_id].values()))
-        # logger.debug(f'{type(data_tuple)}, {data_tuple}')
-        execute_sql_query(sql_put_data, data_tuple)
+        # Check if item_id is already exist in database
+        if item_id not in item_ids_database:
+            data_tuple = tuple(
+                (item_data for item_data in data[item_id].values()))
+            # logger.debug(f'{type(data_tuple)}, {data_tuple}')
+            execute_sql_query(sql_put_data, data_tuple)
     logger.info('Data saved into table kvartiry_vtorichka!')
 
 
@@ -169,6 +173,35 @@ def duplicates_check(table):
         f'{type(item_ids_list)}, {len(item_ids_list)}, {item_ids_list}')
 
 
+def get_item_count_per_day(table):
+    sql_get_item_count_per_day = f'''
+                                 SELECT 
+                                     STRFTIME('%Y-%m-%d', item_date), 
+                                     COUNT(*) 
+                                 FROM 
+                                    {table} 
+                                 GROUP BY 
+                                    STRFTIME('%Y-%m-%d', item_date);
+                                 '''
+    item_count_per_day = execute_sql_query(sql_get_item_count_per_day)
+    logger.debug(
+        f'item_count_per_day received: {len(item_count_per_day)} | {item_count_per_day}')
+    return item_count_per_day
+
+
+def get_item_count_per_day2(table):
+    sql_get_item_count_per_day = f'''
+                                 SELECT 
+                                     STRFTIME('%Y-%m-%d', item_date) 
+                                 FROM 
+                                    {table};
+                                 '''
+    item_count_per_day = execute_sql_query(sql_get_item_count_per_day)
+    logger.debug(
+        f'item_count_per_day received: {len(item_count_per_day)} | {item_count_per_day}')
+    return item_count_per_day
+
+
 # def rename_table_items():
 #     sql_rename_table_items = '''
 #                            ALTER TABLE items
@@ -179,9 +212,10 @@ def duplicates_check(table):
 
 if __name__ == '__main__':
     # create_main_table()
-    duplicates_check('kvartiry_vtorichka')
-    duplicates_check('kvartiry_novostroyka')
+    # duplicates_check('kvartiry_vtorichka')
+    # duplicates_check('kvartiry_novostroyka')
     # rename_table_items()
     # create_table_kvartiry_novostroyka()
     # get_item_ids('kvartiry_vtorichka')
     # get_item_ids_list('kvartiry_vtorichka')
+    print(get_item_count_per_day('kvartiry_vtorichka'))
