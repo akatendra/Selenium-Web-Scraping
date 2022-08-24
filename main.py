@@ -28,8 +28,10 @@ def sleep_time(max_sec):
 
 
 def run_flow(URL, start_page, end_page):
+    global browsers
     # Initialize web browser
     browser = scraper.get_firefox_browser()
+    browsers.append(browser)
     scraper.connect_to_page(browser, URL, start_page)
     logger.debug(
         f'Browser for pages {URL} | {start_page}-{end_page} opened: {spent_time()}')
@@ -41,26 +43,6 @@ def run_flow(URL, start_page, end_page):
         page_url = f'{URL}?p={current_page}'
         browser.get(page_url)
         page_processing(current_page, browser)
-        current_page += 1
-
-    # Stop script
-    browser.quit()
-
-
-def run_flow_kvartiry_novostroyka(URL, start_page, end_page):
-    # Initialize web browser
-    browser = scraper.get_firefox_browser()
-    scraper.connect_to_page(browser, URL, start_page)
-    logger.debug(
-        f'Browser for pages {URL} | {start_page}-{end_page} opened: {spent_time()}')
-    # Wait random seconds
-    sleep_time(5)
-    current_page = start_page
-    while current_page <= end_page:
-        logger.debug(f'Take in work page: {current_page}')
-        page_url = f'{URL}?p={current_page}'
-        browser.get(page_url)
-        page_processing_kvartiry_novostroyka(current_page, browser)
         current_page += 1
 
     # Stop script
@@ -90,6 +72,27 @@ def page_processing(page_number, browser):
     current_url = browser.current_url
     logger.debug(f'Current URL in run_process: {current_url}')
     return current_url
+
+
+def run_flow_kvartiry_novostroyka(URL, start_page, end_page):
+    # Initialize web browser
+    browser = next(browser_gen)
+    # browser = scraper.get_firefox_browser()
+    # scraper.connect_to_page(browser, URL, start_page)
+    # logger.debug(
+    #     f'Browser for pages {URL} | {start_page}-{end_page} opened: {spent_time()}')
+    # Wait random seconds
+    sleep_time(5)
+    current_page = start_page
+    while current_page <= end_page:
+        logger.debug(f'Take in work page: {current_page}')
+        page_url = f'{URL}?p={current_page}'
+        browser.get(page_url)
+        page_processing_kvartiry_novostroyka(current_page, browser)
+        current_page += 1
+
+    # Stop script
+    browser.quit()
 
 
 def page_processing_kvartiry_novostroyka(page_number, browser):
@@ -128,13 +131,13 @@ if __name__ == "__main__":
     last_page = 100
     output_timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     output_filename = f'data_store/avito_{output_timestamp}.xlsx'
+    browsers = []
     # End of variables values setting
 
     logger.info('Start...')
 
-
     # Adding multithreading
-    pages = [(1, 18), (19, 41), (42, 59), (60, 78), (79, 100)]
+    pages = [(1, 14), (15, 32), (33, 48), (49, 63), (64, 82), (83, 100)]
 
     futures = []
     with ThreadPoolExecutor() as executor:
@@ -149,6 +152,14 @@ if __name__ == "__main__":
     # Wait for ending of all running processes
     wait(futures)
     # End of multithreading
+
+    # kvartiry_novostroyka
+    pages.clear()
+    pages = [(1, 9), (10, 21), (22, 31), (32, 39), (40, 47)]
+
+    # Create generator for taking browser
+    logger.debug(f'browsers: {browsers}')
+    browser_gen = (browser for browser in browsers)
 
     # kvartiry_novostroyka
     pages.clear()
