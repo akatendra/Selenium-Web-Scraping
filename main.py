@@ -153,17 +153,13 @@ if __name__ == "__main__":
     wait(futures)
     # End of multithreading
 
-    # kvartiry_novostroyka
-    pages.clear()
-    pages = [(1, 9), (10, 21), (22, 31), (32, 39), (40, 47)]
-
     # Create generator for taking browser
     logger.debug(f'browsers: {browsers}')
     browser_gen = (browser for browser in browsers)
 
     # kvartiry_novostroyka
     pages.clear()
-    pages = [(1, 9), (10, 21), (22, 31), (32, 39), (40, 47)]
+    pages = [(1, 9), (10, 17), (18, 23), (24, 32), (33, 41), (42, 47)]
 
     futures_kvartiry_novostroyka = []
     with ThreadPoolExecutor() as executor:
