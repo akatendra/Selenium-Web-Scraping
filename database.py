@@ -197,9 +197,38 @@ def get_item_count_per_day2(table):
                                     {table};
                                  '''
     item_count_per_day = execute_sql_query(sql_get_item_count_per_day)
-    logger.debug(
-        f'item_count_per_day received: {len(item_count_per_day)} | {item_count_per_day}')
+    # logger.debug(
+    #     f'item_count_per_day received: {len(item_count_per_day)} | {item_count_per_day}')
     return item_count_per_day
+
+def get_item_date_price_area(table):
+    sql_get_item_date_price_area = f'''
+                                 SELECT
+                                     STRFTIME('%Y-%m-%d', item_date),
+                                     item_price,
+                                     item_area
+                                 FROM 
+                                    {table};
+                                 '''
+    item_date_price_area = execute_sql_query(sql_get_item_date_price_area)
+    # logger.debug(
+    #     f'item_date_price_area received: {len(item_date_price_area)} | {item_date_price_area}')
+    return item_date_price_area
+
+def get_item_date_price_area_average(table):
+    sql_get_item_date_price_area_av = f'''
+                                 SELECT
+                                     STRFTIME('%Y-%m-%d', item_date),
+                                     round(AVG(item_price / item_area), 0) AS av_price_per_sq_m
+                                 FROM 
+                                    {table}
+                                 GROUP BY 
+                                    STRFTIME('%Y-%m-%d', item_date);
+                                 '''
+    item_date_price_area_av = execute_sql_query(sql_get_item_date_price_area_av)
+    # logger.debug(
+    #     f'item_date_price_area_av received: {len(item_date_price_area_av)} | {item_date_price_area_av}')
+    return item_date_price_area_av
 
 
 # def rename_table_items():
