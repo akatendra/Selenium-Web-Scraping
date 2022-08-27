@@ -6,16 +6,24 @@ from bs4 import BeautifulSoup
 import logging
 import logging.config
 
-# Set up logging
+
+
+
 import database
 
+# Global variables
+vtorichka_counter = 0
+novostroy_counter = 0
+
+# Set up logging
 logging.config.fileConfig("logging.ini", disable_existing_loggers=False)
 logger = logging.getLogger(__name__)
 # Remove from output to the log information from Firefox, where a lot
 # of space is taken up by the server response with the html content
 # of the entire page. Outputting this information to the log greatly increases
 # the size of the log file.
-logging.getLogger('selenium.webdriver.remote.remote_connection').setLevel(logging.WARNING)
+logging.getLogger('selenium.webdriver.remote.remote_connection').setLevel(
+    logging.WARNING)
 
 
 def get_chrome_browser():
@@ -43,8 +51,10 @@ def get_firefox_browser():
     # options.headless = True
     FIREFOX_PATH = 'd:\\Python\\geckodriver-v0-31-0-win64\\geckodriver.exe'
     service = Service(FIREFOX_PATH)
-    browser = webdriver.Firefox(service=service, options=options, service_log_path=None)
+    browser = webdriver.Firefox(service=service, options=options,
+                                service_log_path=None)
     return browser
+
 
 
 def connect_to_page(browser, URL, page_number=1):
@@ -113,6 +123,7 @@ def convert_date(date):
 
 
 def parse_html_kvartiry_vtorichka(html):
+    global vtorichka_counter
     BASE = 'https://www.avito.ru'
     soup = BeautifulSoup(html, 'lxml')
     items = soup.select('div[data-marker="item"]')
@@ -124,7 +135,8 @@ def parse_html_kvartiry_vtorichka(html):
     data = {}
     # Get items_ids which are in database already
     item_ids_from_db = database.get_item_ids('kvartiry_vtorichka')
-    logger.debug(f'Number of item_ids are already exist in database: {len(item_ids_from_db)}')
+    logger.debug(
+        f'Number of item_ids are already exist in database: {len(item_ids_from_db)}')
     for item in items:
         # We intercept the error in case some fields are not filled while
         # parsing. An error during parsing causes the whole process to stop.
@@ -133,11 +145,13 @@ def parse_html_kvartiry_vtorichka(html):
             item_id = item['id']
             logger.debug(f'Detected item_id:  {item_id}')
             if item_id in item_ids_from_db:
-                logger.debug(f'Detected item_id is already exist in database: {item_id} | Skipped...')
+                logger.debug(
+                    f'Detected item_id is already exist in database: {item_id} | Skipped...')
                 logger.debug(
                     '##############################################################')
                 continue
             else:
+                vtorichka_counter += 1
                 logger.debug(
                     f'Detected item_id is taken in work: {item_id}')
                 logger.debug(
@@ -162,7 +176,8 @@ def parse_html_kvartiry_vtorichka(html):
                     item_type = None
                     if '-к.' in item_title_list[0]:
                         item_number_of_rooms_list = item_title_list[0].split()
-                        logger.debug(f'item_number_of_rooms_list: {item_number_of_rooms_list}')
+                        logger.debug(
+                            f'item_number_of_rooms_list: {item_number_of_rooms_list}')
                         item_number_of_rooms_list_len = len(
                             item_number_of_rooms_list)
                         # If the number of rooms is not specified (Апартаменты,
@@ -174,18 +189,21 @@ def parse_html_kvartiry_vtorichka(html):
                         # Стандартный вариант в большинстве случаев
                         elif item_number_of_rooms_list_len == 2:
                             item_number_of_rooms = int(
-                                item_number_of_rooms_list[0].replace('-к.', ''))
+                                item_number_of_rooms_list[0].replace('-к.',
+                                                                     ''))
                             item_type = item_number_of_rooms_list[1]
                         # There was a variant when the number of rooms was preceded
                         # by the word: Аукцион:
                         elif item_number_of_rooms_list_len == 3:
                             item_number_of_rooms = int(
-                                item_number_of_rooms_list[1].replace('-к.', ''))
+                                item_number_of_rooms_list[1].replace('-к.',
+                                                                     ''))
                             item_type = item_number_of_rooms_list[2]
                     else:
                         item_number_of_rooms = None
                         item_type = item_title_list[0].lower()
-                    logger.debug(f'item_number_of_rooms:  {item_number_of_rooms}')
+                    logger.debug(
+                        f'item_number_of_rooms:  {item_number_of_rooms}')
                     logger.debug(f'item_type:  {item_type}')
 
                     # Getting an apartment area
@@ -196,7 +214,8 @@ def parse_html_kvartiry_vtorichka(html):
                                 '\xa0м²',
                                 ''))
                     else:
-                        item_area = int(item_title_list[1].replace('\xa0м\xb2', ''))
+                        item_area = int(
+                            item_title_list[1].replace('\xa0м\xb2', ''))
                     logger.debug(f'item_area:  {item_area}')
 
                     # Getting the floor on which the apartment is located and the
@@ -205,12 +224,14 @@ def parse_html_kvartiry_vtorichka(html):
                                                                    '').strip()
                     logger.debug(f'item_floor_house:  {item_floor_house}')
                     item_floor_house_list = item_floor_house.split('/')
-                    logger.debug(f'item_floor_house_list: {item_floor_house_list}')
+                    logger.debug(
+                        f'item_floor_house_list: {item_floor_house_list}')
                     item_floor = int(item_floor_house_list[0].replace(' ', ''))
                     logger.debug(f'item_floor:  {item_floor}')
                     item_floors_in_house = int(
                         item_floor_house_list[1].replace(' ', ''))
-                    logger.debug(f'item_floors_in_house:  {item_floors_in_house}')
+                    logger.debug(
+                        f'item_floors_in_house:  {item_floors_in_house}')
                 else:
                     item_title = None
                     item_type = None
@@ -221,10 +242,12 @@ def parse_html_kvartiry_vtorichka(html):
                     item_floors_in_house = None
 
                 # Getting an item price.
-                item_price_str = item.select_one('span[class*="price-text-"]').text
+                item_price_str = item.select_one(
+                    'span[class*="price-text-"]').text
                 logger.debug(f'item_price_str:  {item_price_str}')
                 item_price = int(
-                    ''.join(char for char in item_price_str if char.isdecimal()))
+                    ''.join(
+                        char for char in item_price_str if char.isdecimal()))
                 logger.debug(f'item_price:  {item_price}')
 
                 # Getting an item price currency.
@@ -233,7 +256,8 @@ def parse_html_kvartiry_vtorichka(html):
                 logger.debug(f'item_currency:  {item_currency}')
 
                 # Getting an item address.
-                item_geo_address = item.select_one('span[class*="geo-address-"]')
+                item_geo_address = item.select_one(
+                    'span[class*="geo-address-"]')
                 if item_geo_address:
                     item_address = item_geo_address.find('span').text
                 else:
@@ -255,7 +279,8 @@ def parse_html_kvartiry_vtorichka(html):
                     'div[data-marker="item-date"]').text
                 # Convert '2 дня назад' or '5 минут назад' in normal calendar date.
                 item_date = convert_date(item_date_data)
-                logger.debug(f'item_date:  {item_date.strftime("%Y-%m-%d %H:%M")}')
+                logger.debug(
+                    f'item_date:  {item_date.strftime("%Y-%m-%d %H:%M")}')
                 item_add_date = datetime.now()
         except Exception as err:
             logging.exception('Exception occurred during parsing!')
@@ -285,10 +310,13 @@ def parse_html_kvartiry_vtorichka(html):
         logger.debug(
             '##############################################################')
     logger.debug(f'New items detected during parse: {len(data)}')
-    logger.debug('##############################################################')
+    logger.debug(
+        '##############################################################')
     return data
 
+
 def parse_html_kvartiry_novostroyka(html):
+    global novostroy_counter
     BASE = 'https://www.avito.ru'
     soup = BeautifulSoup(html, 'lxml')
     items = soup.select('div[data-marker="item"]')
@@ -300,7 +328,8 @@ def parse_html_kvartiry_novostroyka(html):
     data = {}
     # Get items_ids which are in database already
     item_ids_from_db = database.get_item_ids('kvartiry_novostroyka')
-    logger.debug(f'Number of item_ids are already exist in database: {len(item_ids_from_db)}')
+    logger.debug(
+        f'Number of item_ids are already exist in database: {len(item_ids_from_db)}')
     for item in items:
         # We intercept the error in case some fields are not filled while
         # parsing. An error during parsing causes the whole process to stop.
@@ -309,11 +338,13 @@ def parse_html_kvartiry_novostroyka(html):
             item_id = item['id']
             logger.debug(f'Detected item_id:  {item_id}')
             if item_id in item_ids_from_db:
-                logger.debug(f'Detected item_id is already exist in database: {item_id} | Skipped...')
+                logger.debug(
+                    f'Detected item_id is already exist in database: {item_id} | Skipped...')
                 logger.debug(
                     '##############################################################')
                 continue
             else:
+                novostroy_counter += 1
                 logger.debug(
                     f'Detected item_id is taken in work: {item_id}')
                 logger.debug(
@@ -338,7 +369,8 @@ def parse_html_kvartiry_novostroyka(html):
                     item_type = None
                     if '-к.' in item_title_list[0]:
                         item_number_of_rooms_list = item_title_list[0].split()
-                        logger.debug(f'item_number_of_rooms_list: {item_number_of_rooms_list}')
+                        logger.debug(
+                            f'item_number_of_rooms_list: {item_number_of_rooms_list}')
                         item_number_of_rooms_list_len = len(
                             item_number_of_rooms_list)
                         # If the number of rooms is not specified (Апартаменты,
@@ -350,18 +382,21 @@ def parse_html_kvartiry_novostroyka(html):
                         # Стандартный вариант в большинстве случаев
                         elif item_number_of_rooms_list_len == 2:
                             item_number_of_rooms = int(
-                                item_number_of_rooms_list[0].replace('-к.', ''))
+                                item_number_of_rooms_list[0].replace('-к.',
+                                                                     ''))
                             item_type = item_number_of_rooms_list[1]
                         # There was a variant when the number of rooms was preceded
                         # by the word: Аукцион:
                         elif item_number_of_rooms_list_len == 3:
                             item_number_of_rooms = int(
-                                item_number_of_rooms_list[1].replace('-к.', ''))
+                                item_number_of_rooms_list[1].replace('-к.',
+                                                                     ''))
                             item_type = item_number_of_rooms_list[2]
                     else:
                         item_number_of_rooms = None
                         item_type = item_title_list[0].lower()
-                    logger.debug(f'item_number_of_rooms:  {item_number_of_rooms}')
+                    logger.debug(
+                        f'item_number_of_rooms:  {item_number_of_rooms}')
                     logger.debug(f'item_type:  {item_type}')
 
                     # Getting an apartment area
@@ -372,7 +407,8 @@ def parse_html_kvartiry_novostroyka(html):
                                 '\xa0м²',
                                 ''))
                     else:
-                        item_area = int(item_title_list[1].replace('\xa0м\xb2', ''))
+                        item_area = int(
+                            item_title_list[1].replace('\xa0м\xb2', ''))
                     logger.debug(f'item_area:  {item_area}')
 
                     # Getting the floor on which the apartment is located and the
@@ -381,12 +417,14 @@ def parse_html_kvartiry_novostroyka(html):
                                                                    '').strip()
                     logger.debug(f'item_floor_house:  {item_floor_house}')
                     item_floor_house_list = item_floor_house.split('/')
-                    logger.debug(f'item_floor_house_list: {item_floor_house_list}')
+                    logger.debug(
+                        f'item_floor_house_list: {item_floor_house_list}')
                     item_floor = int(item_floor_house_list[0].replace(' ', ''))
                     logger.debug(f'item_floor:  {item_floor}')
                     item_floors_in_house = int(
                         item_floor_house_list[1].replace(' ', ''))
-                    logger.debug(f'item_floors_in_house:  {item_floors_in_house}')
+                    logger.debug(
+                        f'item_floors_in_house:  {item_floors_in_house}')
                 else:
                     item_title = None
                     item_type = None
@@ -397,10 +435,12 @@ def parse_html_kvartiry_novostroyka(html):
                     item_floors_in_house = None
 
                 # Getting an item price.
-                item_price_str = item.select_one('span[class*="price-text-"]').text
+                item_price_str = item.select_one(
+                    'span[class*="price-text-"]').text
                 logger.debug(f'item_price_str:  {item_price_str}')
                 item_price = int(
-                    ''.join(char for char in item_price_str if char.isdecimal()))
+                    ''.join(
+                        char for char in item_price_str if char.isdecimal()))
                 logger.debug(f'item_price:  {item_price}')
 
                 # Getting an item price currency.
@@ -409,14 +449,17 @@ def parse_html_kvartiry_novostroyka(html):
                 logger.debug(f'item_currency:  {item_currency}')
 
                 # Getting a builder's name.
-                item_development_name_obj = item.select_one('div[data-marker="item-development-name"]')
+                item_development_name_obj = item.select_one(
+                    'div[data-marker="item-development-name"]')
                 if item_development_name_obj:
                     item_development_name = item_development_name_obj.text
                 else:
                     item_development_name = None
-                logger.debug(f'item_development_name:  {item_development_name}')
+                logger.debug(
+                    f'item_development_name:  {item_development_name}')
                 # Getting an item address.
-                item_geo_address = item.select_one('span[class*="geo-address-"]')
+                item_geo_address = item.select_one(
+                    'span[class*="geo-address-"]')
                 if item_geo_address:
                     item_address = item_geo_address.find('span').text
                 else:
@@ -438,7 +481,8 @@ def parse_html_kvartiry_novostroyka(html):
                     'div[data-marker="item-date"]').text
                 # Convert '2 дня назад' or '5 минут назад' in normal calendar date.
                 item_date = convert_date(item_date_data)
-                logger.debug(f'item_date:  {item_date.strftime("%Y-%m-%d %H:%M")}')
+                logger.debug(
+                    f'item_date:  {item_date.strftime("%Y-%m-%d %H:%M")}')
                 item_add_date = datetime.now()
         except Exception as err:
             logging.exception('Exception occurred during parsing!')
@@ -469,5 +513,6 @@ def parse_html_kvartiry_novostroyka(html):
         logger.debug(
             '##############################################################')
     logger.debug(f'New items detected during parse: {len(data)}')
-    logger.debug('##############################################################')
+    logger.debug(
+        '##############################################################')
     return data

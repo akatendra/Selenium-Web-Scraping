@@ -173,6 +173,7 @@ def duplicates_check(table):
         f'{type(item_ids_list)}, {len(item_ids_list)}, {item_ids_list}')
 
 
+# VISUALISATION QUERIES
 def get_item_count_per_day(table):
     sql_get_item_count_per_day = f'''
                                  SELECT 
@@ -201,6 +202,7 @@ def get_item_count_per_day2(table):
     #     f'item_count_per_day received: {len(item_count_per_day)} | {item_count_per_day}')
     return item_count_per_day
 
+
 def get_item_date_price_area(table):
     sql_get_item_date_price_area = f'''
                                  SELECT
@@ -215,6 +217,7 @@ def get_item_date_price_area(table):
     #     f'item_date_price_area received: {len(item_date_price_area)} | {item_date_price_area}')
     return item_date_price_area
 
+
 def get_item_date_price_area_average(table):
     sql_get_item_date_price_area_av = f'''
                                  SELECT
@@ -225,11 +228,95 @@ def get_item_date_price_area_average(table):
                                  GROUP BY 
                                     STRFTIME('%Y-%m-%d', item_date);
                                  '''
-    item_date_price_area_av = execute_sql_query(sql_get_item_date_price_area_av)
+    item_date_price_area_av = execute_sql_query(
+        sql_get_item_date_price_area_av)
     # logger.debug(
     #     f'item_date_price_area_av received: {len(item_date_price_area_av)} | {item_date_price_area_av}')
     return item_date_price_area_av
 
+
+def get_item_count_by_cities(table):
+    sql_get_item_count_by_cities = f'''
+                                 SELECT
+                                     item_city
+                                 FROM 
+                                    {table};
+                                 '''
+    item_count_by_cities = execute_sql_query(sql_get_item_count_by_cities)
+    logger.debug(
+        f'item_date_price_area_av received: {len(item_count_by_cities)} | {item_count_by_cities}')
+    return item_count_by_cities
+
+
+def get_top10_cities(table):
+    sql_get_order_vector = f'''
+                            SELECT item_city
+                            FROM
+                              (SELECT item_city,
+                                      COUNT(*) AS item_count
+                               FROM {table}
+                               GROUP BY item_city
+                               ORDER BY item_count DESC
+                               LIMIT 10)
+                            '''
+    order_vector = execute_sql_query(sql_get_order_vector)
+    order_vector = list((item[0] for item in order_vector))
+    logger.debug(
+        f'item_date_price_area_av received: {len(order_vector)} | {order_vector}')
+    sql_get_top10_cities = f'''
+                            SELECT item_city
+                            FROM {table}
+                            WHERE item_city IN
+                                (SELECT item_city
+                                 FROM
+                                   (SELECT item_city,
+                                           COUNT(*)
+                                    FROM {table}
+                                    GROUP BY item_city
+                                    ORDER BY COUNT(*) DESC
+                                    LIMIT 10))
+                                    ;
+                                 '''
+    top10_cities = execute_sql_query(sql_get_top10_cities)
+    logger.debug(
+        f'item_date_price_area_av received: {len(top10_cities)} | {top10_cities}')
+    return order_vector, top10_cities
+
+
+def get_item_count_sevastopol(table):
+    sql_get_item_count_sevastopol = f'''
+                                 SELECT
+                                     STRFTIME('%Y-%m-%d', item_date),
+                                     COUNT(*)
+                                 FROM 
+                                    {table}
+                                 WHERE
+                                     item_city = 'Севастополь'
+                                 GROUP BY 
+                                    STRFTIME('%Y-%m-%d', item_date)
+                                 ORDER BY
+                                     STRFTIME('%Y-%m-%d', item_date)
+                                 '''
+    item_count_sevastopol = execute_sql_query(sql_get_item_count_sevastopol)
+    logger.debug(
+        f'item_date_price_area_av received: {len(item_count_sevastopol)} | {item_count_sevastopol}')
+    return item_count_sevastopol
+
+def get_item_count_sevastopol_simple(table):
+    sql_get_item_count_sevastopol = f'''
+                                 SELECT
+                                     STRFTIME('%Y-%m-%d', item_date)
+                                 FROM 
+                                    {table}
+                                 WHERE
+                                     item_city = 'Севастополь'
+                                 ORDER BY
+                                     STRFTIME('%Y-%m-%d', item_date)
+                                 '''
+    item_count_sevastopol = execute_sql_query(sql_get_item_count_sevastopol)
+    logger.debug(
+        f'item_date_price_area_av received: {len(item_count_sevastopol)} | {item_count_sevastopol}')
+    return item_count_sevastopol
 
 # def rename_table_items():
 #     sql_rename_table_items = '''
@@ -247,4 +334,7 @@ if __name__ == '__main__':
     # create_table_kvartiry_novostroyka()
     # get_item_ids('kvartiry_vtorichka')
     # get_item_ids_list('kvartiry_vtorichka')
-    print(get_item_count_per_day('kvartiry_vtorichka'))
+    # print(get_item_count_per_day('kvartiry_vtorichka'))
+    # get_item_count_by_cities('kvartiry_vtorichka')
+    # get_top10_cities('kvartiry_vtorichka')
+    get_item_count_sevastopol('kvartiry_vtorichka')

@@ -27,8 +27,10 @@ def sleep_time(max_sec):
 
 
 def run_flow_kvartiry_vtorichka(URL, start_page, end_page):
+    global browsers
     # Initialize web browser
     browser = scraper.get_firefox_browser()
+    browsers.append(browser)
     scraper.connect_to_page(browser, URL, start_page)
     logger.debug(
         f'Browser for pages {URL} | {start_page}-{end_page} opened: {spent_time()}')
@@ -47,7 +49,6 @@ def run_flow_kvartiry_vtorichka(URL, start_page, end_page):
 
 
 def page_processing_kvartiry_vtorichka(page_number, browser):
-    global output_filename
     logger.debug(
         '##################################################################')
     logger.debug(f'Scraping page #{page_number}...')
@@ -72,8 +73,10 @@ def page_processing_kvartiry_vtorichka(page_number, browser):
 
 
 def run_flow_kvartiry_novostroyka(URL, start_page, end_page):
+    global browsers
     # Initialize web browser
     browser = scraper.get_firefox_browser()
+    browsers.append(browser)
     scraper.connect_to_page(browser, URL, start_page)
     logger.debug(
         f'Browser for pages {URL} | {start_page}-{end_page} opened: {spent_time()}')
@@ -141,6 +144,7 @@ if __name__ == "__main__":
     output_timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     # output_filename = f'data_store/avito_{output_timestamp}.xlsx'
     browsers = []
+
     # End of variables values setting
 
     logger.info('Start...')
@@ -148,15 +152,22 @@ if __name__ == "__main__":
     # Adding multithreading
 
     # kvartiry_vtorichka
-    pages = [(1, 14), (15, 32), (33, 48), (49, 63), (64, 82), (83, 100)]
+    # pages = [(1, 14), (15, 32), (33, 48), (49, 63), (64, 82), (83, 100)]
+    pages = [(1, 11), (12, 24), (25, 36), (37, 49), (50, 63), (64, 77), (78, 90), (91, 100)]
 
-    # thread_pool(run_flow_kvartiry_vtorichka, url_kvartiry_vtorichka, pages)
+    thread_pool(run_flow_kvartiry_vtorichka, url_kvartiry_vtorichka, pages)
 
     # kvartiry_novostroyka
     pages.clear()
-    pages = [(1, 9), (10, 17), (18, 23), (24, 32), (33, 41), (42, 47)]
+    # pages = [(1, 9), (10, 17), (18, 23), (24, 32), (33, 41), (42, 47)]
+    pages = [(1, 5), (6, 11), (12, 17), (18, 25), (26, 31), (32, 37), (38, 43), (44, 47)]
 
     thread_pool(run_flow_kvartiry_novostroyka, url_kvartiry_novostroyka, pages)
+
+    # Closing all unclosed browsers
+    for browser in browsers:
+        if browser.service.is_connectable():
+            browser.quit()
 
     time_end = time.time()
     elapsed_time = time_end - time_begin
@@ -166,4 +177,4 @@ if __name__ == "__main__":
         elapsed_time_str = f'| {int(elapsed_minutes)} min {round(elapsed_sec, 1)} sec'
     else:
         elapsed_time_str = f'| {round(elapsed_time, 1)} sec'
-    logger.info(f'Elapsed run time: {elapsed_time_str} seconds')
+    logger.info(f'Elapsed run time: {elapsed_time_str} seconds | New vtorichka items: {scraper.vtorichka_counter} | New novostroy items: {scraper.novostroy_counter}')
