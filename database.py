@@ -185,8 +185,8 @@ def get_item_count_per_day(table):
                                     STRFTIME('%Y-%m-%d', item_date);
                                  '''
     item_count_per_day = execute_sql_query(sql_get_item_count_per_day)
-    logger.debug(
-        f'item_count_per_day received: {len(item_count_per_day)} | {item_count_per_day}')
+    # logger.debug(
+    #     f'item_count_per_day received: {len(item_count_per_day)} | {item_count_per_day}')
     return item_count_per_day
 
 
@@ -234,6 +234,25 @@ def get_item_date_price_area_average(table):
     #     f'item_date_price_area_av received: {len(item_date_price_area_av)} | {item_date_price_area_av}')
     return item_date_price_area_av
 
+def get_item_date_price_area_average_union():
+    sql_get_item_date_price_area_av_union = f'''
+                                            SELECT STRFTIME('%Y-%m-%d', item_date),
+                                                   round(AVG(item_price / item_area), 0) AS av_price_per_sq_m,
+                                                   property_type
+                                            FROM 'kvartiry_vtorichka'
+                                            GROUP BY STRFTIME('%Y-%m-%d', item_date)
+                                            UNION
+                                            SELECT STRFTIME('%Y-%m-%d', item_date),
+                                                   round(AVG(item_price / item_area), 0) AS av_price_per_sq_m,
+                                                   property_type
+                                            FROM 'kvartiry_novostroyka'
+                                            GROUP BY STRFTIME('%Y-%m-%d', item_date);
+                                            '''
+    item_date_price_area_av_union = execute_sql_query(sql_get_item_date_price_area_av_union)
+    # logger.debug(
+    #     f'item_date_price_area_av received: {len(item_date_price_area_av_union)} | {item_date_price_area_av_union}')
+    return item_date_price_area_av_union
+
 
 def get_item_count_by_cities(table):
     sql_get_item_count_by_cities = f'''
@@ -243,8 +262,8 @@ def get_item_count_by_cities(table):
                                     {table};
                                  '''
     item_count_by_cities = execute_sql_query(sql_get_item_count_by_cities)
-    logger.debug(
-        f'item_date_price_area_av received: {len(item_count_by_cities)} | {item_count_by_cities}')
+    # logger.debug(
+    #     f'item_date_price_area_av received: {len(item_count_by_cities)} | {item_count_by_cities}')
     return item_count_by_cities
 
 
@@ -261,8 +280,8 @@ def get_top10_cities(table):
                             '''
     order_vector = execute_sql_query(sql_get_order_vector)
     order_vector = list((item[0] for item in order_vector))
-    logger.debug(
-        f'item_date_price_area_av received: {len(order_vector)} | {order_vector}')
+    # logger.debug(
+    #     f'item_date_price_area_av received: {len(order_vector)} | {order_vector}')
     sql_get_top10_cities = f'''
                             SELECT item_city
                             FROM {table}
@@ -278,8 +297,8 @@ def get_top10_cities(table):
                                     ;
                                  '''
     top10_cities = execute_sql_query(sql_get_top10_cities)
-    logger.debug(
-        f'item_date_price_area_av received: {len(top10_cities)} | {top10_cities}')
+    # logger.debug(
+    #     f'item_date_price_area_av received: {len(top10_cities)} | {top10_cities}')
     return order_vector, top10_cities
 
 
@@ -298,8 +317,8 @@ def get_item_count_sevastopol(table):
                                      STRFTIME('%Y-%m-%d', item_date)
                                  '''
     item_count_sevastopol = execute_sql_query(sql_get_item_count_sevastopol)
-    logger.debug(
-        f'item_date_price_area_av received: {len(item_count_sevastopol)} | {item_count_sevastopol}')
+    # logger.debug(
+    #     f'item_date_price_area_av received: {len(item_count_sevastopol)} | {item_count_sevastopol}')
     return item_count_sevastopol
 
 def get_item_count_sevastopol_simple(table):
@@ -314,8 +333,8 @@ def get_item_count_sevastopol_simple(table):
                                      STRFTIME('%Y-%m-%d', item_date)
                                  '''
     item_count_sevastopol = execute_sql_query(sql_get_item_count_sevastopol)
-    logger.debug(
-        f'item_date_price_area_av received: {len(item_count_sevastopol)} | {item_count_sevastopol}')
+    # logger.debug(
+    #     f'item_date_price_area_av received: {len(item_count_sevastopol)} | {item_count_sevastopol}')
     return item_count_sevastopol
 
 # def rename_table_items():
@@ -337,4 +356,5 @@ if __name__ == '__main__':
     # print(get_item_count_per_day('kvartiry_vtorichka'))
     # get_item_count_by_cities('kvartiry_vtorichka')
     # get_top10_cities('kvartiry_vtorichka')
-    get_item_count_sevastopol('kvartiry_vtorichka')
+    # get_item_count_sevastopol('kvartiry_vtorichka')
+    get_item_date_price_area_average('kvartiry_vtorichka')

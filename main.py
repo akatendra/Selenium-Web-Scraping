@@ -152,15 +152,20 @@ if __name__ == "__main__":
     # Adding multithreading
 
     # kvartiry_vtorichka
-    # pages = [(1, 14), (15, 32), (33, 48), (49, 63), (64, 82), (83, 100)]
-    pages = [(1, 11), (12, 24), (25, 36), (37, 49), (50, 63), (64, 77), (78, 90), (91, 100)]
+
+    # 6 threads
+    pages = [(1, 14), (15, 32), (33, 48), (49, 63), (64, 82), (83, 100)]
+    # 8 threads
+    # pages = [(1, 11), (12, 24), (25, 36), (37, 49), (50, 63), (64, 77), (78, 90), (91, 100)]
 
     thread_pool(run_flow_kvartiry_vtorichka, url_kvartiry_vtorichka, pages)
 
     # kvartiry_novostroyka
     pages.clear()
-    # pages = [(1, 9), (10, 17), (18, 23), (24, 32), (33, 41), (42, 47)]
-    pages = [(1, 5), (6, 11), (12, 17), (18, 25), (26, 31), (32, 37), (38, 43), (44, 47)]
+    # 6 threads
+    pages = [(1, 9), (10, 17), (18, 23), (24, 32), (33, 41), (42, 47)]
+    # 8 threads
+    # pages = [(1, 5), (6, 11), (12, 17), (18, 25), (26, 31), (32, 37), (38, 43), (44, 47)]
 
     thread_pool(run_flow_kvartiry_novostroyka, url_kvartiry_novostroyka, pages)
 
