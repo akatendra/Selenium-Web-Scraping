@@ -15,19 +15,19 @@ def px_to_inch(px, dpi=72):
     return px / dpi
 
 
-def show_bar_values(obj):
+def show_bar_values(obj, label_type='center'):
     for ax in obj.axes.ravel():
         # add annotations
         for bar_container in ax.containers:
             labels = [bar.get_height() for bar in bar_container]
             ax.bar_label(bar_container,
                          labels=labels,
-                         label_type='edge',
+                         # label_type='edge',
+                         label_type=label_type,
                          fontsize=16,
                          # rotation=90,
                          padding=2)
         ax.margins(y=0.2)
-
 
 # Set up logging
 logging.config.fileConfig("logging.ini", disable_existing_loggers=False)
@@ -46,7 +46,7 @@ sb.set_style("whitegrid",
               "grid.linestyle": ":"
               })
 
-# 1. Количество новых объявлений по дням
+# 1. Количество новых объявлений по дням квартиры-вторичка
 data1 = database.get_item_count_per_day2('kvartiry_vtorichka')
 df1 = pd.DataFrame(data1, columns=['Дата'])
 df1.sort_values(by=['Дата'],
@@ -60,7 +60,7 @@ histogram = sb.displot(data=df1,
                        height=6,
                        aspect=5)
 histogram.set(ylabel='Кол-во новых объявлений в день')
-histogram.set(title='Кол-во новых объявлений по дням')
+histogram.set(title='Кол-во новых объявлений по дням | Квартиры-вторичка')
 
 show_bar_values(histogram)
 # Fix problem seaborn function 'displot' does not show up a part of the title
@@ -69,7 +69,82 @@ plt.tight_layout()
 
 plt.show()
 
-# 2. Средняя стоимость квадратного метра по дням
+# 1.1 Количество новых объявлений по дням вся недвижимость наложение одного на другое
+data11 = database.get_item_count_per_day3()
+df11 = pd.DataFrame(data11, columns=['Дата', 'Тип недвижимости'])
+# Ordering
+df11.sort_values(by=['Дата'],
+                axis=0,
+                inplace=True,
+                ascending=True)
+print(df11)
+histogram = sb.displot(data=df11,
+                       x="Дата",
+                       kind='hist',
+                       hue='Тип недвижимости',
+                       # col='Тип недвижимости',
+                       height=6,
+                       aspect=5)
+histogram.set(ylabel='Кол-во новых объявлений в день')
+# histogram.set(title='Кол-во новых объявлений по дням')
+
+
+show_bar_values(histogram)
+# Fix problem seaborn function 'displot' does not show up a part of the title
+# https://stackoverflow.com/questions/69386785/python-seaborn-function-displot-does-not-show-up-a-part-of-the-title
+plt.tight_layout()
+
+plt.show()
+
+
+# 1.2 Количество новых объявлений по дням квартиры-новострой
+data12 = database.get_item_count_per_day2('kvartiry_novostroyka')
+df12 = pd.DataFrame(data12, columns=['Дата'])
+df12.sort_values(by=['Дата'],
+                axis=0,
+                inplace=True,
+                ascending=True)
+print(df12)
+histogram = sb.displot(data=df12,
+                       x="Дата",
+                       kind='hist',
+                       height=6,
+                       aspect=5)
+histogram.set(ylabel='Кол-во новых объявлений в день')
+histogram.set(title='Кол-во новых объявлений по дням | Квартиры-новострой')
+
+show_bar_values(histogram)
+# Fix problem seaborn function 'displot' does not show up a part of the title
+# https://stackoverflow.com/questions/69386785/python-seaborn-function-displot-does-not-show-up-a-part-of-the-title
+plt.tight_layout()
+
+plt.show()
+
+
+# 1.3 Количество новых объявлений по дням дома, дачи и коттеджи
+data1_3 = database.get_item_count_per_day2('doma_dachi_kottedzhi')
+df1_3 = pd.DataFrame(data1_3, columns=['Дата'])
+df1_3.sort_values(by=['Дата'],
+                axis=0,
+                inplace=True,
+                ascending=True)
+print(df12)
+histogram = sb.displot(data=df1_3,
+                       x="Дата",
+                       kind='hist',
+                       height=6,
+                       aspect=5)
+histogram.set(ylabel='Кол-во новых объявлений в день')
+histogram.set(title='Кол-во новых объявлений по дням | Дома, дачи и коттеджи')
+
+show_bar_values(histogram)
+# Fix problem seaborn function 'displot' does not show up a part of the title
+# https://stackoverflow.com/questions/69386785/python-seaborn-function-displot-does-not-show-up-a-part-of-the-title
+plt.tight_layout()
+
+plt.show()
+
+# 2. Средняя стоимость квадратного метра по дням вся недвижимость
 data2 = database.get_item_date_price_area_average_union()
 df2 = pd.DataFrame(data2, columns=['Дата', 'Средняя стоимость за м2, руб.',
                                    'Тип недвижимости'])
@@ -109,11 +184,15 @@ for x, y, item_type in zip(df2['Дата'], df2['Средняя стоимост
     if item_type == 'квартиры-вторичка':
         plt.text(x, y - 150, '{:.0f}'.format(y),
                  color='white').set_backgroundcolor(
-            '#1f77b4')
-    else:
+            '#2ca02c')
+    elif item_type == 'Дома, дачи и коттеджи':
         plt.text(x, y - 150, '{:.0f}'.format(y),
                  color='white').set_backgroundcolor(
             '#ff7f0e')
+    else:
+        plt.text(x, y - 150, '{:.0f}'.format(y),
+                 color='white').set_backgroundcolor(
+            '#1f77b4')
 
 # Fix problem seaborn function 'displot' does not show up a part of the title
 # https://stackoverflow.com/questions/69386785/python-seaborn-function-displot-does-not-show-up-a-part-of-the-title

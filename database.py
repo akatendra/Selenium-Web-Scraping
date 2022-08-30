@@ -74,6 +74,29 @@ def create_table_kvartiry_novostroyka():
     logger.info('Table kvartiry_novostroyka created!')
 
 
+def create_table_doma_dachi_kottedzhi():
+    sql_create_table_doma_dachi_kottedzhi = '''
+                            CREATE TABLE IF NOT EXISTS doma_dachi_kottedzhi (
+                            id INTEGER PRIMARY KEY, 
+                            data_item_id INTEGER,
+                            item_id TEXT,
+                            item_url TEXT,
+                            item_title TEXT,
+                            item_type TEXT,
+                            item_area REAL,
+                            item_land_area TEXT,
+                            item_price INTEGER,
+                            item_currency TEXT,
+                            item_address TEXT,
+                            item_city TEXT,
+                            property_type TEXT,
+                            item_date TIMESTAMP,
+                            item_add_date TIMESTAMP
+                            );'''
+    execute_sql_query(sql_create_table_doma_dachi_kottedzhi)
+    logger.info('Table doma_dachi_kottedzhi created!')
+
+
 def get_item_ids(table):
     sql_get_item_ids = f'SELECT item_id FROM {table};'
     item_ids = execute_sql_query(sql_get_item_ids)
@@ -165,6 +188,38 @@ def write_to_db_kvartiry_novostroyka(data):
     logger.info('Data saved into table kvartiry_novostroyka!')
 
 
+def write_to_db_doma_dachi_kottedzhi(data):
+    table = 'doma_dachi_kottedzhi'
+    sql_put_data = f'''
+                   INSERT INTO {table}
+                   ('data_item_id', 
+                    'item_id', 
+                    'item_url', 
+                    'item_title',
+                    'item_type', 
+                    'item_area',
+                    'item_land_area', 
+                    'item_price', 
+                    'item_currency',
+                    'item_address', 
+                    'item_city',
+                    'property_type',
+                    'item_date', 
+                    'item_add_date') 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                   '''
+    item_ids = set(data.keys())
+    # logger.debug(f'{type(item_ids)}, {len(item_ids)}, {item_ids}')
+    item_ids_database = get_item_ids(table)
+    item_ids_to_write = item_ids.difference(item_ids_database)
+    for item_id in item_ids_to_write:
+        # logger.debug(f'item_id: {item_id}')
+        data_tuple = tuple((item_data for item_data in data[item_id].values()))
+        # logger.debug(f'{type(data_tuple)}, {data_tuple}')
+        execute_sql_query(sql_put_data, data_tuple)
+    logger.info('Data saved into table doma_dachi_kottedzhi!')
+
+
 def duplicates_check(table):
     item_ids = get_item_ids(table)
     logger.debug(f'{type(item_ids)}, {len(item_ids)}, {item_ids}')
@@ -173,7 +228,9 @@ def duplicates_check(table):
         f'{type(item_ids_list)}, {len(item_ids_list)}, {item_ids_list}')
 
 
-# VISUALISATION QUERIES
+###############################################################################
+######################## VISUALISATION QUERIES ################################
+###############################################################################
 def get_item_count_per_day(table):
     sql_get_item_count_per_day = f'''
                                  SELECT 
@@ -196,6 +253,26 @@ def get_item_count_per_day2(table):
                                      STRFTIME('%Y-%m-%d', item_date) 
                                  FROM 
                                     {table};
+                                 '''
+    item_count_per_day = execute_sql_query(sql_get_item_count_per_day)
+    # logger.debug(
+    #     f'item_count_per_day received: {len(item_count_per_day)} | {item_count_per_day}')
+    return item_count_per_day
+
+
+def get_item_count_per_day3():
+    sql_get_item_count_per_day = f'''
+                                    SELECT STRFTIME('%Y-%m-%d', item_date),
+                                    property_type
+                                    FROM 'kvartiry_vtorichka'
+                                    UNION ALL
+                                    SELECT STRFTIME('%Y-%m-%d', item_date),
+                                    property_type
+                                    FROM 'kvartiry_novostroyka'
+                                    UNION ALL
+                                    SELECT STRFTIME('%Y-%m-%d', item_date),
+                                    property_type
+                                    FROM 'doma_dachi_kottedzhi'
                                  '''
     item_count_per_day = execute_sql_query(sql_get_item_count_per_day)
     # logger.debug(
@@ -234,6 +311,7 @@ def get_item_date_price_area_average(table):
     #     f'item_date_price_area_av received: {len(item_date_price_area_av)} | {item_date_price_area_av}')
     return item_date_price_area_av
 
+
 def get_item_date_price_area_average_union():
     sql_get_item_date_price_area_av_union = f'''
                                             SELECT STRFTIME('%Y-%m-%d', item_date),
@@ -246,9 +324,16 @@ def get_item_date_price_area_average_union():
                                                    round(AVG(item_price / item_area), 0) AS av_price_per_sq_m,
                                                    property_type
                                             FROM 'kvartiry_novostroyka'
+                                            GROUP BY STRFTIME('%Y-%m-%d', item_date)
+                                            UNION
+                                            SELECT STRFTIME('%Y-%m-%d', item_date),
+                                                   round(AVG(item_price / item_area), 0) AS av_price_per_sq_m,
+                                                   property_type
+                                            FROM 'doma_dachi_kottedzhi'
                                             GROUP BY STRFTIME('%Y-%m-%d', item_date);
                                             '''
-    item_date_price_area_av_union = execute_sql_query(sql_get_item_date_price_area_av_union)
+    item_date_price_area_av_union = execute_sql_query(
+        sql_get_item_date_price_area_av_union)
     # logger.debug(
     #     f'item_date_price_area_av received: {len(item_date_price_area_av_union)} | {item_date_price_area_av_union}')
     return item_date_price_area_av_union
@@ -321,6 +406,7 @@ def get_item_count_sevastopol(table):
     #     f'item_date_price_area_av received: {len(item_count_sevastopol)} | {item_count_sevastopol}')
     return item_count_sevastopol
 
+
 def get_item_count_sevastopol_simple(table):
     sql_get_item_count_sevastopol = f'''
                                  SELECT
@@ -328,7 +414,7 @@ def get_item_count_sevastopol_simple(table):
                                  FROM 
                                     {table}
                                  WHERE
-                                     item_city = 'Севастополь'
+                                     item_city LIKE '%Севастополь%'
                                  ORDER BY
                                      STRFTIME('%Y-%m-%d', item_date)
                                  '''
@@ -336,6 +422,29 @@ def get_item_count_sevastopol_simple(table):
     # logger.debug(
     #     f'item_date_price_area_av received: {len(item_count_sevastopol)} | {item_count_sevastopol}')
     return item_count_sevastopol
+
+
+def get_item_cities():
+    sql_get_item_cities = f'''
+                            SELECT
+                                item_city
+                            FROM
+                                'kvartiry_vtorichka'
+                            GROUP BY
+                                item_city
+                            UNION
+                            SELECT
+                                item_city
+                            FROM
+                                'kvartiry_novostroyka'
+                            GROUP BY 
+                                item_city                                     
+                                     '''
+    item_cities = execute_sql_query(sql_get_item_cities)
+    # logger.debug(
+    #     f'item_date_price_area_av received: {len(item_cities)} | {item_cities}')
+    return item_cities
+
 
 # def rename_table_items():
 #     sql_rename_table_items = '''
@@ -357,4 +466,5 @@ if __name__ == '__main__':
     # get_item_count_by_cities('kvartiry_vtorichka')
     # get_top10_cities('kvartiry_vtorichka')
     # get_item_count_sevastopol('kvartiry_vtorichka')
-    get_item_date_price_area_average('kvartiry_vtorichka')
+    # get_item_date_price_area_average('kvartiry_vtorichka')
+    create_table_doma_dachi_kottedzhi()

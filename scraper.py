@@ -14,6 +14,7 @@ import database
 # Global variables
 vtorichka_counter = 0
 novostroy_counter = 0
+doma_dachi_kottedzhi_counter = 0
 
 # Set up logging
 logging.config.fileConfig("logging.ini", disable_existing_loggers=False)
@@ -504,6 +505,155 @@ def parse_html_kvartiry_novostroyka(html):
                      'item_address': item_address,
                      'item_city': item_city,
                      'property_type': 'квартиры-новострой',
+                     'item_date': item_date,
+                     'item_add_date': item_add_date
+                     }
+        # Put data dictionary as 'value' in new dictionary
+        # with item_id as 'key'.
+        data[item_id] = item_dict
+        logger.debug(
+            '##############################################################')
+    logger.debug(f'New items detected during parse: {len(data)}')
+    logger.debug(
+        '##############################################################')
+    return data
+
+def parse_html_doma_dachi_kottedzhi(html):
+    global doma_dachi_kottedzhi_counter
+    BASE = 'https://www.avito.ru'
+    soup = BeautifulSoup(html, 'lxml')
+    items = soup.select('div[data-marker="item"]')
+    logger.debug(
+        '##################################################################')
+    logger.debug(f'Number of items founded on page:  {len(items)}')
+    logger.debug(
+        '##################################################################')
+    data = {}
+    # Get items_ids which are in database already
+    item_ids_from_db = database.get_item_ids('doma_dachi_kottedzhi')
+    logger.debug(
+        f'Number of item_ids are already exist in database: {len(item_ids_from_db)}')
+    for item in items:
+        # We intercept the error in case some fields are not filled while
+        # parsing. An error during parsing causes the whole process to stop.
+        # In case of an error, we move on to parsing the next item.
+        try:
+            item_id = item['id']
+            logger.debug(f'Detected item_id:  {item_id}')
+            if item_id in item_ids_from_db:
+                logger.debug(
+                    f'Detected item_id is already exist in database: {item_id} | Skipped...')
+                logger.debug(
+                    '##############################################################')
+                continue
+            else:
+                doma_dachi_kottedzhi_counter += 1
+                logger.debug(
+                    f'Detected item_id is taken in work: {item_id}')
+                logger.debug(
+                    '^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^')
+                data_item_id = int(item['data-item-id'])
+                logger.debug(f'data_item_id:  {data_item_id}')
+                item_a = item.select_one('a[data-marker="item-title"]')
+                logger.debug(f'item_a:  {item_a}')
+                item_url = BASE + item_a['href']
+                logger.debug(f'item_url:  {item_url}')
+                item_title = item_a.find('h3').text
+                # Intercepting and processing errors in the title
+                # of the announcement. Check is the title exist or not. There was
+                # a case where the title field was not filled in for some reason,
+                # and it caused a parsing error.
+                if item_title:
+                    logger.debug(f'item_title:  {item_title}')
+                    if '\xa0' in item_title:
+                        item_title = item_title.replace('\xa0', ' ')
+                    item_title_list = item_title.split(' ')
+                    logger.debug(f'item_title_list:  {item_title_list}')
+                    item_type = None
+                    item_land_area = None
+                    item_area = None
+                    if item_title_list[0]:
+                        item_type = item_title_list[0].lower()
+                        logger.debug(
+                            f'item_type: {item_type}')
+                    # Getting a house area
+                    if item_title_list[1]:
+                        if ',' in item_title_list[1]:
+                            item_area = float(item_title_list[1].replace(',', '.'))
+                        else:
+                            item_area = int(item_title_list[1])
+                    logger.debug(f'item_area:  {item_area}')
+                    if item_title_list[5]:
+                        if ',' in item_title_list[5]:
+                            item_land_area = float(item_title_list[5].replace(',', '.'))
+                        else:
+                            item_land_area = int(item_title_list[5])
+                else:
+                    item_title = None
+                    item_type = None
+                    item_area = None
+                    item_land_area = None
+
+
+                # Getting an item price.
+                item_price_str = item.select_one(
+                    'span[class*="price-text-"]').text
+                logger.debug(f'item_price_str:  {item_price_str}')
+                item_price = int(
+                    ''.join(
+                        char for char in item_price_str if char.isdecimal()))
+                logger.debug(f'item_price:  {item_price}')
+
+                # Getting an item price currency.
+                item_currency = item.select_one(
+                    'span[class*="price-currency-"]').text
+                logger.debug(f'item_currency:  {item_currency}')
+
+                item_city = None
+                item_address = None
+                # Getting an item address.
+                item_geo_address = item.select_one(
+                    'span[class*="geo-address-"]')
+                logger.debug(f'item_geo_address:  {item_geo_address}')
+                if item_geo_address:
+                    item_address_text = item_geo_address.find('span').text
+                    logger.debug(f'item_address_text:  {item_address_text}')
+
+                    # Getting an item city.
+                    if ',' in item_address_text:
+                        item_address_text_list = item_address_text.split(',')
+                        item_city = item_address_text_list[0]
+                        item_address = item_address_text_list[1].strip()
+                    else:
+                        item_city = item_address_text
+                        item_address = None
+                logger.debug(f'item_city:  {item_city}')
+                logger.debug(f'item_address:  {item_address}')
+
+                # Getting an item publishing date.
+                item_date_data = item.select_one(
+                    'div[data-marker="item-date"]').text
+                # Convert '2 дня назад' or '5 минут назад' in normal calendar date.
+                item_date = convert_date(item_date_data)
+                logger.debug(
+                    f'item_date:  {item_date.strftime("%Y-%m-%d %H:%M")}')
+                item_add_date = datetime.now()
+        except Exception as err:
+            logging.exception('Exception occurred during parsing!')
+            continue
+        # data writing into a dictionary.
+        item_dict = {'data_item_id': data_item_id,
+                     'item_id': item_id,
+                     'item_url': item_url,
+                     'item_title': item_title,
+                     'item_type': item_type,
+                     'item_area': item_area,
+                     'item_land_area': item_land_area,
+                     'item_price': item_price,
+                     'item_currency': item_currency,
+                     'item_address': item_address,
+                     'item_city': item_city,
+                     'property_type': 'Дома, дачи и коттеджи',
                      'item_date': item_date,
                      'item_add_date': item_add_date
                      }
