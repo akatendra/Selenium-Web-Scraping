@@ -7,9 +7,12 @@ import matplotlib.pyplot as plt
 
 import logging.config
 
+timestamp = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+
 
 def cm_to_inch(value):
     return value / 2.54
+
 
 def px_to_inch(px, dpi=72):
     return px / dpi
@@ -29,6 +32,42 @@ def show_bar_values(obj, label_type='center'):
                          padding=2)
         ax.margins(y=0.2)
 
+
+def put_timestamp(horizontal='left', vertical='top'):
+    global timestamp
+    # Define axes
+    left = 0.01
+    width = 0.9
+    bottom = 0.01
+    height = 0.9
+    right = left + width
+    top = bottom + height
+    ax = plt.gca()
+
+    # Transform axes
+    ax.set_transform(ax.transAxes)
+
+    if horizontal == 'left':
+        horizontal_v = left
+    else:
+        horizontal_v = right
+
+    if vertical == 'top':
+        vertical_v = top
+    else:
+        vertical_v = bottom
+
+    # Define timestamp text
+    ax.text(horizontal_v,
+            vertical_v,
+            timestamp,
+            horizontalalignment=horizontal,
+            verticalalignment=vertical,
+            color='r',
+            size=10,
+            transform=ax.transAxes)
+
+
 # Set up logging
 logging.config.fileConfig("logging.ini", disable_existing_loggers=False)
 logger = logging.getLogger(__name__)
@@ -38,7 +77,6 @@ logger = logging.getLogger(__name__)
 logging.getLogger('matplotlib').setLevel(logging.WARNING)
 
 output_timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-
 
 # Plot style
 sb.set_style("whitegrid",
@@ -63,6 +101,9 @@ histogram.set(ylabel='Кол-во новых объявлений в день')
 histogram.set(title='Кол-во новых объявлений по дням | Квартиры-вторичка')
 
 show_bar_values(histogram)
+
+put_timestamp()
+
 # Fix problem seaborn function 'displot' does not show up a part of the title
 # https://stackoverflow.com/questions/69386785/python-seaborn-function-displot-does-not-show-up-a-part-of-the-title
 plt.tight_layout()
@@ -74,9 +115,9 @@ data11 = database.get_item_count_per_day3()
 df11 = pd.DataFrame(data11, columns=['Дата', 'Тип недвижимости'])
 # Ordering
 df11.sort_values(by=['Дата'],
-                axis=0,
-                inplace=True,
-                ascending=True)
+                 axis=0,
+                 inplace=True,
+                 ascending=True)
 print(df11)
 histogram = sb.displot(data=df11,
                        x="Дата",
@@ -90,20 +131,21 @@ histogram.set(ylabel='Кол-во новых объявлений в день')
 
 
 show_bar_values(histogram)
+
+put_timestamp()
 # Fix problem seaborn function 'displot' does not show up a part of the title
 # https://stackoverflow.com/questions/69386785/python-seaborn-function-displot-does-not-show-up-a-part-of-the-title
 plt.tight_layout()
 
 plt.show()
 
-
 # 1.2 Количество новых объявлений по дням квартиры-новострой
 data12 = database.get_item_count_per_day2('kvartiry_novostroyka')
 df12 = pd.DataFrame(data12, columns=['Дата'])
 df12.sort_values(by=['Дата'],
-                axis=0,
-                inplace=True,
-                ascending=True)
+                 axis=0,
+                 inplace=True,
+                 ascending=True)
 print(df12)
 histogram = sb.displot(data=df12,
                        x="Дата",
@@ -114,20 +156,20 @@ histogram.set(ylabel='Кол-во новых объявлений в день')
 histogram.set(title='Кол-во новых объявлений по дням | Квартиры-новострой')
 
 show_bar_values(histogram)
+put_timestamp()
 # Fix problem seaborn function 'displot' does not show up a part of the title
 # https://stackoverflow.com/questions/69386785/python-seaborn-function-displot-does-not-show-up-a-part-of-the-title
 plt.tight_layout()
 
 plt.show()
 
-
 # 1.3 Количество новых объявлений по дням дома, дачи и коттеджи
 data1_3 = database.get_item_count_per_day2('doma_dachi_kottedzhi')
 df1_3 = pd.DataFrame(data1_3, columns=['Дата'])
 df1_3.sort_values(by=['Дата'],
-                axis=0,
-                inplace=True,
-                ascending=True)
+                  axis=0,
+                  inplace=True,
+                  ascending=True)
 print(df12)
 histogram = sb.displot(data=df1_3,
                        x="Дата",
@@ -138,6 +180,7 @@ histogram.set(ylabel='Кол-во новых объявлений в день')
 histogram.set(title='Кол-во новых объявлений по дням | Дома, дачи и коттеджи')
 
 show_bar_values(histogram)
+put_timestamp()
 # Fix problem seaborn function 'displot' does not show up a part of the title
 # https://stackoverflow.com/questions/69386785/python-seaborn-function-displot-does-not-show-up-a-part-of-the-title
 plt.tight_layout()
@@ -194,6 +237,8 @@ for x, y, item_type in zip(df2['Дата'], df2['Средняя стоимост
                  color='white').set_backgroundcolor(
             '#1f77b4')
 
+put_timestamp()
+
 # Fix problem seaborn function 'displot' does not show up a part of the title
 # https://stackoverflow.com/questions/69386785/python-seaborn-function-displot-does-not-show-up-a-part-of-the-title
 plt.tight_layout()
@@ -221,6 +266,8 @@ histogram_city.set(
 
 # sb.set(rc={"figure.figsize": (30, 6)}) #width=30, #height=6
 show_bar_values(histogram_city)
+put_timestamp()
+
 # Fix problem seaborn function 'displot' does not show up a part of the title
 # https://stackoverflow.com/questions/69386785/python-seaborn-function-displot-does-not-show-up-a-part-of-the-title
 plt.tight_layout()
@@ -247,11 +294,12 @@ histogram_sevastopol.set(
     title='Количество новых объявлений по Севастополю по дням')
 
 show_bar_values(histogram_sevastopol)
+put_timestamp()
 
 # Fix problem seaborn function 'displot' does not show up a part of the title
 # https://stackoverflow.com/questions/69386785/python-seaborn-function-displot-does-not-show-up-a-part-of-the-title
 plt.tight_layout()
 fig = plt.gcf()
-fig.savefig(f'image_out/histogram_sevastopol_{output_timestamp}.png', format='png', dpi=72)
+fig.savefig(f'image_out/histogram_sevastopol_{output_timestamp}.png',
+            format='png', dpi=72)
 plt.show()
-

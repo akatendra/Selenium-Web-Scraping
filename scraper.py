@@ -9,9 +9,9 @@ import logging.config
 import database
 
 # Global variables
-vtorichka_counter = 15
-novostroy_counter = 20
-doma_dachi_kottedzhi_counter = 25
+vtorichka_counter = 0
+novostroy_counter = 0
+doma_dachi_kottedzhi_counter = 0
 
 # Set up logging
 logging.config.fileConfig("logging.ini", disable_existing_loggers=False)
