@@ -26,7 +26,7 @@ def sleep_time(max_sec):
     time.sleep(rand_time)
 
 
-def run_flow_kvartiry_vtorichka(URL, start_page, end_page):
+def run_flow(URL, start_page, end_page, parse_func, write_to_db_func):
     global browsers
     # Initialize web browser
     browser = scraper.get_firefox_browser()
@@ -41,133 +41,47 @@ def run_flow_kvartiry_vtorichka(URL, start_page, end_page):
         logger.debug(f'Take in work page: {current_page}')
         page_url = f'{URL}?p={current_page}'
         browser.get(page_url)
-        page_processing_kvartiry_vtorichka(current_page, browser)
+        ####################################################################
+        ####################  PAGE PROCESSING  #############################
+        ####################################################################
+        logger.debug(
+            '##################################################################')
+        logger.debug(f'Scraping page #{current_page}...')
+        logger.debug(
+            '##################################################################')
+        html = browser.page_source
+        logger.debug(
+            f'Page_source of page {current_page} received: {spent_time()}')
+        output_data = parse_func(html)
+        logger.debug(
+            f'Output_data of page {current_page} received: {spent_time()}')
+        # xlsx.append_xlsx_file(output_data, output_filename, page_number)
+        write_to_db_func(output_data)
+
+        # Go to pagination bar to simulate human behavior
+        # driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        pagination_bar = browser.find_element(By.XPATH,
+                                              '//div[@data-marker="pagination-button"]')
+        browser.execute_script("arguments[0].scrollIntoView();",
+                               pagination_bar)
+
+        current_url = browser.current_url
+        logger.debug(f'Current URL in run_process: {current_url}')
+
+        ####################################################################
         current_page += 1
 
     # Stop script
     browser.quit()
 
 
-def page_processing_kvartiry_vtorichka(page_number, browser):
-    logger.debug(
-        '##################################################################')
-    logger.debug(f'Scraping page #{page_number}...')
-    logger.debug(
-        '##################################################################')
-    html = browser.page_source
-    logger.debug(f'Page_source of page {page_number} received: {spent_time()}')
-    output_data = scraper.parse_html_kvartiry_vtorichka(html)
-    logger.debug(f'Output_data of page {page_number} received: {spent_time()}')
-    # xlsx.append_xlsx_file(output_data, output_filename, page_number)
-    database.write_to_db_kvartiry_vtorichka(output_data)
-
-    # Go to pagination bar to simulate human behavior
-    # driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-    pagination_bar = browser.find_element(By.XPATH,
-                                          '//div[@data-marker="pagination-button"]')
-    browser.execute_script("arguments[0].scrollIntoView();", pagination_bar)
-
-    current_url = browser.current_url
-    logger.debug(f'Current URL in run_process: {current_url}')
-    return current_url
-
-
-def run_flow_kvartiry_novostroyka(URL, start_page, end_page):
-    global browsers
-    # Initialize web browser
-    browser = scraper.get_firefox_browser()
-    browsers.append(browser)
-    scraper.connect_to_page(browser, URL, start_page)
-    logger.debug(
-        f'Browser for pages {URL} | {start_page}-{end_page} opened: {spent_time()}')
-    # Wait random seconds
-    sleep_time(5)
-    current_page = start_page
-    while current_page <= end_page:
-        logger.debug(f'Take in work page: {current_page}')
-        page_url = f'{URL}?p={current_page}'
-        browser.get(page_url)
-        page_processing_kvartiry_novostroyka(current_page, browser)
-        current_page += 1
-
-    # Stop script
-    browser.quit()
-
-
-def page_processing_kvartiry_novostroyka(page_number, browser):
-    logger.debug(
-        '##################################################################')
-    logger.debug(f'Scraping page #{page_number}...')
-    logger.debug(
-        '##################################################################')
-    html = browser.page_source
-    logger.debug(f'Page_source of page {page_number} received: {spent_time()}')
-    output_data = scraper.parse_html_kvartiry_novostroyka(html)
-    logger.debug(f'Output_data of page {page_number} received: {spent_time()}')
-    database.write_to_db_kvartiry_novostroyka(output_data)
-
-    # Go to pagination bar to simulate human behavior
-    # driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-    pagination_bar = browser.find_element(By.XPATH,
-                                          '//div[@data-marker="pagination-button"]')
-    browser.execute_script("arguments[0].scrollIntoView();", pagination_bar)
-
-    current_url = browser.current_url
-    logger.debug(f'Current URL in run_process: {current_url}')
-    return current_url
-
-
-def run_flow_doma_dachi_kottedzhi(URL, start_page, end_page):
-    global browsers
-    # Initialize web browser
-    browser = scraper.get_firefox_browser()
-    browsers.append(browser)
-    scraper.connect_to_page(browser, URL, start_page)
-    logger.debug(
-        f'Browser for pages {URL} | {start_page}-{end_page} opened: {spent_time()}')
-    # Wait random seconds
-    sleep_time(5)
-    current_page = start_page
-    while current_page <= end_page:
-        logger.debug(f'Take in work page: {current_page}')
-        page_url = f'{URL}?p={current_page}'
-        browser.get(page_url)
-        page_processing_doma_dachi_kottedzhi(current_page, browser)
-        current_page += 1
-
-    # Stop script
-    browser.quit()
-
-
-def page_processing_doma_dachi_kottedzhi(page_number, browser):
-    logger.debug(
-        '##################################################################')
-    logger.debug(f'Scraping page #{page_number}...')
-    logger.debug(
-        '##################################################################')
-    html = browser.page_source
-    logger.debug(f'Page_source of page {page_number} received: {spent_time()}')
-    output_data = scraper.parse_html_doma_dachi_kottedzhi(html)
-    logger.debug(f'Output_data of page {page_number} received: {spent_time()}')
-    database.write_to_db_doma_dachi_kottedzhi(output_data)
-
-    # Go to pagination bar to simulate human behavior
-    # driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-    pagination_bar = browser.find_element(By.XPATH,
-                                          '//div[@data-marker="pagination-button"]')
-    browser.execute_script("arguments[0].scrollIntoView();", pagination_bar)
-
-    current_url = browser.current_url
-    logger.debug(f'Current URL in run_process: {current_url}')
-    return current_url
-
-
-def thread_pool(func, url, pages):
+def thread_pool(func, url, pages, parse_func, write_to_db_func):
     futures = []
     with ThreadPoolExecutor() as executor:
         for page in pages:
             futures.append(
-                executor.submit(func, url, page[0], page[1]))
+                executor.submit(func, url, page[0], page[1], parse_func,
+                                write_to_db_func))
             # Wait random seconds
             sleep_time(10)
             logger.debug(
@@ -191,8 +105,19 @@ if __name__ == "__main__":
     output_timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     # output_filename = f'data_store/avito_{output_timestamp}.xlsx'
     browsers = []
-
     # End of variables values setting
+
+    # Import parse functions
+    parse_vtorichka = scraper.parse_html_kvartiry_vtorichka
+    parse_novostroyka = scraper.parse_html_kvartiry_novostroyka
+    parse_doma = scraper.parse_html_doma_dachi_kottedzhi
+
+    # Import writing to DB functions
+    write_db_vtorichka = database.write_to_db_kvartiry_vtorichka
+    write_db_novostroyka = database.write_to_db_kvartiry_novostroyka
+    write_db_doma = database.write_to_db_doma_dachi_kottedzhi
+
+
 
     logger.info('Start...')
 
@@ -201,11 +126,16 @@ if __name__ == "__main__":
     # kvartiry_vtorichka
 
     # 6 threads
-    # pages = [(1, 14), (15, 32), (33, 48), (49, 63), (64, 82), (83, 100)]
+    pages = [(1, 14), (15, 32), (33, 48), (49, 63), (64, 82), (83, 100)]
     # 8 threads
-    pages = [(1, 11), (12, 24), (25, 36), (37, 49), (50, 63), (64, 77), (78, 90), (91, 100)]
+    # pages = [(1, 11), (12, 24), (25, 36), (37, 49), (50, 63), (64, 77), (78, 90), (91, 100)]
 
-    thread_pool(run_flow_kvartiry_vtorichka, url_kvartiry_vtorichka, pages)
+    thread_pool(run_flow,
+                url_kvartiry_vtorichka,
+                pages,
+                parse_vtorichka,
+                write_db_vtorichka
+                )
 
     # kvartiry_novostroyka
     pages.clear()
@@ -214,18 +144,27 @@ if __name__ == "__main__":
     # 8 threads
     # pages = [(1, 5), (6, 11), (12, 17), (18, 25), (26, 31), (32, 37), (38, 43), (44, 47)]
 
-    thread_pool(run_flow_kvartiry_novostroyka, url_kvartiry_novostroyka, pages)
+    thread_pool(run_flow,
+                url_kvartiry_novostroyka,
+                pages,
+                parse_novostroyka,
+                write_db_novostroyka
+                )
 
     # doma_dachi_kottedzhi
     pages.clear()
     # 6 threads
-    # pages = [(1, 14), (15, 32), (33, 48), (49, 63), (64, 82), (83, 100)]
+    pages = [(1, 14), (15, 32), (33, 48), (49, 63), (64, 82), (83, 100)]
 
     # 8 threads
-    pages = [(1, 11), (12, 24), (25, 36), (37, 49), (50, 63), (64, 77),
-             (78, 90), (91, 100)]
+    # pages = [(1, 11), (12, 24), (25, 36), (37, 49), (50, 63), (64, 77), (78, 90), (91, 100)]
     # pages = [(1, 3)]
-    thread_pool(run_flow_doma_dachi_kottedzhi, url_doma_dachi_kottedzhi, pages)
+    thread_pool(run_flow,
+                url_doma_dachi_kottedzhi,
+                pages,
+                parse_doma,
+                write_db_doma
+                )
 
     # Closing all unclosed browsers
     for browser in browsers:

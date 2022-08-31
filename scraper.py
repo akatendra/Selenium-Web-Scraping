@@ -6,15 +6,12 @@ from bs4 import BeautifulSoup
 import logging
 import logging.config
 
-
-
-
 import database
 
 # Global variables
-vtorichka_counter = 0
-novostroy_counter = 0
-doma_dachi_kottedzhi_counter = 0
+vtorichka_counter = 15
+novostroy_counter = 20
+doma_dachi_kottedzhi_counter = 25
 
 # Set up logging
 logging.config.fileConfig("logging.ini", disable_existing_loggers=False)
@@ -55,7 +52,6 @@ def get_firefox_browser():
     browser = webdriver.Firefox(service=service, options=options,
                                 service_log_path=None)
     return browser
-
 
 
 def connect_to_page(browser, URL, page_number=1):
@@ -153,6 +149,8 @@ def parse_html_kvartiry_vtorichka(html):
                 continue
             else:
                 vtorichka_counter += 1
+                logger.debug(
+                    f'vtorichka_counter: {vtorichka_counter}')
                 logger.debug(
                     f'Detected item_id is taken in work: {item_id}')
                 logger.debug(
@@ -347,6 +345,8 @@ def parse_html_kvartiry_novostroyka(html):
             else:
                 novostroy_counter += 1
                 logger.debug(
+                    f'novostroy_counter: {novostroy_counter}')
+                logger.debug(
                     f'Detected item_id is taken in work: {item_id}')
                 logger.debug(
                     '^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^')
@@ -518,6 +518,7 @@ def parse_html_kvartiry_novostroyka(html):
         '##############################################################')
     return data
 
+
 def parse_html_doma_dachi_kottedzhi(html):
     global doma_dachi_kottedzhi_counter
     BASE = 'https://www.avito.ru'
@@ -549,6 +550,8 @@ def parse_html_doma_dachi_kottedzhi(html):
             else:
                 doma_dachi_kottedzhi_counter += 1
                 logger.debug(
+                    f'doma_dachi_kottedzhi_counter: {doma_dachi_kottedzhi_counter}')
+                logger.debug(
                     f'Detected item_id is taken in work: {item_id}')
                 logger.debug(
                     '^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^')
@@ -579,13 +582,15 @@ def parse_html_doma_dachi_kottedzhi(html):
                     # Getting a house area
                     if item_title_list[1]:
                         if ',' in item_title_list[1]:
-                            item_area = float(item_title_list[1].replace(',', '.'))
+                            item_area = float(
+                                item_title_list[1].replace(',', '.'))
                         else:
                             item_area = int(item_title_list[1])
                     logger.debug(f'item_area:  {item_area}')
                     if item_title_list[5]:
                         if ',' in item_title_list[5]:
-                            item_land_area = float(item_title_list[5].replace(',', '.'))
+                            item_land_area = float(
+                                item_title_list[5].replace(',', '.'))
                         else:
                             item_land_area = int(item_title_list[5])
                 else:
@@ -593,7 +598,6 @@ def parse_html_doma_dachi_kottedzhi(html):
                     item_type = None
                     item_area = None
                     item_land_area = None
-
 
                 # Getting an item price.
                 item_price_str = item.select_one(
