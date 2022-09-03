@@ -2,6 +2,7 @@ from datetime import datetime
 import time
 import scraper
 import database
+import visualisation
 import logging.config
 from selenium.webdriver.common.by import By
 from concurrent.futures import ThreadPoolExecutor, wait
@@ -181,3 +182,7 @@ if __name__ == "__main__":
         elapsed_time_str = f'| {round(elapsed_time, 1)} sec'
     logger.info(
         f'Elapsed run time: {elapsed_time_str} seconds | New vtorichka items: {scraper.vtorichka_counter} | New novostroy items: {scraper.novostroy_counter} | New doma_dachi_kottedzhi items: {scraper.doma_dachi_kottedzhi_counter}')
+
+    # Get visualization
+    visualisation.get_visualization()
+    logger.info(f'Visualization complete!')

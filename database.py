@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 def execute_sql_query(sql, data=None):
-    with contextlib.closing(sqlite3.connect('avito_database.sqlite',
+    with contextlib.closing(sqlite3.connect('avito_database.sqlite3',
                                             detect_types=sqlite3.PARSE_DECLTYPES |
                                                          sqlite3.PARSE_COLNAMES
                                             )
