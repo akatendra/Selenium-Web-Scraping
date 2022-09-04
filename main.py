@@ -185,4 +185,3 @@ if __name__ == "__main__":
 
     # Get visualization
     visualisation.get_visualization()
-    logger.info(f'Visualization complete!')

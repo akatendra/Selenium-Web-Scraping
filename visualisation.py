@@ -346,6 +346,7 @@ def get_visualization():
                 format='png', dpi=72)
     plt.show()
 
+    logger.info(f'Visualization complete!')
 
 if __name__ == '__main__':
     get_visualization()
