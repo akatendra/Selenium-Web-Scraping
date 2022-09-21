@@ -32,7 +32,6 @@ def run_flow(URL, start_page, end_page, parse_func, write_to_db_func):
     # Initialize web browser
     browser = scraper.get_firefox_browser()
     browsers.append(browser)
-    scraper.connect_to_page(browser, URL, start_page)
     logger.debug(
         f'Browser for pages {URL} | {start_page}-{end_page} opened: {spent_time()}')
     # Wait random seconds
@@ -40,8 +39,12 @@ def run_flow(URL, start_page, end_page, parse_func, write_to_db_func):
     current_page = start_page
     while current_page <= end_page:
         logger.debug(f'Take in work page: {current_page}')
-        page_url = f'{URL}?p={current_page}'
+        if current_page == 1:
+            page_url = URL
+        else:
+            page_url = f'{URL}?p={current_page}'
         browser.get(page_url)
+        
         ####################################################################
         ####################  PAGE PROCESSING  #############################
         ####################################################################

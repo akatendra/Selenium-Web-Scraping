@@ -96,6 +96,7 @@ def get_visualization():
     histogram = sb.displot(data=df1,
                            x="Дата",
                            kind='hist',
+                           kde=True,
                            height=6,
                            aspect=5)
     histogram.set(ylabel='Кол-во новых объявлений в день')
@@ -129,6 +130,7 @@ def get_visualization():
     histogram = sb.displot(data=df11,
                            x="Дата",
                            kind='hist',
+                           kde=True,
                            hue='Тип недвижимости',
                            # col='Тип недвижимости',
                            multiple='dodge',
@@ -163,6 +165,7 @@ def get_visualization():
     histogram = sb.displot(data=df12,
                            x="Дата",
                            kind='hist',
+                           kde=True,
                            height=6,
                            aspect=5)
     histogram.set(ylabel='Кол-во новых объявлений в день')
@@ -193,6 +196,7 @@ def get_visualization():
     histogram = sb.displot(data=df1_3,
                            x="Дата",
                            kind='hist',
+                           kde=True,
                            height=6,
                            aspect=5)
     histogram.set(ylabel='Кол-во новых объявлений в день')
@@ -289,6 +293,7 @@ def get_visualization():
     histogram_city = sb.displot(data=df3,
                                 x='Города',
                                 kind='hist',
+                                kde=True,
                                 height=6,
                                 aspect=5
                                 )
@@ -325,6 +330,7 @@ def get_visualization():
     histogram_sevastopol = sb.displot(data=df4,
                                       x='Дата',
                                       kind='hist',
+                                      kde=True,
                                       height=6,
                                       aspect=5
                                       )

@@ -467,4 +467,6 @@ if __name__ == '__main__':
     # get_top10_cities('kvartiry_vtorichka')
     # get_item_count_sevastopol('kvartiry_vtorichka')
     # get_item_date_price_area_average('kvartiry_vtorichka')
-    create_table_doma_dachi_kottedzhi()
+    # create_table_doma_dachi_kottedzhi()
+    # print(get_item_date_price_area_average_union())
+    print(get_item_count_sevastopol_simple('kvartiry_vtorichka'))
