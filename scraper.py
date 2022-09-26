@@ -2,6 +2,7 @@ from datetime import timedelta, datetime
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.firefox.service import Service as FirefoxService
 from bs4 import BeautifulSoup
 import logging
 import logging.config
@@ -48,7 +49,7 @@ def get_firefox_browser():
     #  Will launch browser without UI(headless)
     # options.headless = True
     FIREFOX_PATH = 'd:\\Python\\geckodriver-v0-31-0-win64\\geckodriver.exe'
-    service = Service(FIREFOX_PATH)
+    service = FirefoxService(FIREFOX_PATH)
     browser = webdriver.Firefox(service=service, options=options,
                                 service_log_path=None)
     return browser
