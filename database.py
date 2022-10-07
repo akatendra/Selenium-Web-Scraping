@@ -113,6 +113,17 @@ def get_item_ids_list(table):
     return item_ids
 
 
+def get_days_count(table):
+    sql_get_days_count = f'''
+                            SELECT Count(*)
+                            FROM   (SELECT STRFTIME('%Y-%m-%d', item_date)
+                                    FROM   kvartiry_vtorichka
+                                    GROUP  BY STRFTIME('%Y-%m-%d', item_date)) AS itmd;
+                          '''
+    days_count = execute_sql_query(sql_get_days_count)
+    logger.debug(f'days_count: {days_count}')
+    return days_count
+
 def write_to_db_kvartiry_vtorichka(data):
     table = 'kvartiry_vtorichka'
     sql_put_data = f'''
@@ -456,8 +467,9 @@ def get_item_cities():
 
 if __name__ == '__main__':
     # create_main_table()
-    # duplicates_check('kvartiry_vtorichka')
+    duplicates_check('kvartiry_vtorichka')
     # duplicates_check('kvartiry_novostroyka')
+    # duplicates_check('doma_dachi_kottedzhi')
     # rename_table_items()
     # create_table_kvartiry_novostroyka()
     # get_item_ids('kvartiry_vtorichka')
@@ -469,4 +481,4 @@ if __name__ == '__main__':
     # get_item_date_price_area_average('kvartiry_vtorichka')
     # create_table_doma_dachi_kottedzhi()
     # print(get_item_date_price_area_average_union())
-    print(get_item_count_sevastopol_simple('kvartiry_vtorichka'))
+    # print(get_item_count_sevastopol_simple('kvartiry_vtorichka'))

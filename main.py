@@ -6,6 +6,7 @@ import time
 import scraper
 import database
 import visualisation
+import db_migration
 import logging.config
 from selenium.webdriver.common.by import By
 from concurrent.futures import ThreadPoolExecutor, wait
@@ -191,3 +192,6 @@ if __name__ == "__main__":
 
     # Get visualization
     visualisation.get_visualization()
+
+    # Push fresh data from SQLite DB to remote PostgreSQL DB on VPS Server
+    db_migration.migration()

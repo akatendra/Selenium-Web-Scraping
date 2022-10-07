@@ -338,6 +338,13 @@ def parse_html_kvartiry_novostroyka(html):
     item_ids_from_db = database.get_item_ids('kvartiry_novostroyka')
     logger.debug(
         f'Number of item_ids are already exist in database: {len(item_ids_from_db)}')
+    item_ids_list = []
+    for item in items:
+        item_ids_list.append(item['id'])
+    item_ids_set = set(item_ids_list)
+    logger.debug(f'item_tuple: {item_ids_set}')
+    item_ids_to_parse = item_ids_set.difference(item_ids_from_db)
+    logger.debug(f'items_to_parse: {item_ids_to_parse}')
     for item in items:
         # We intercept the error in case some fields are not filled while
         # parsing. An error during parsing causes the whole process to stop.
@@ -345,7 +352,7 @@ def parse_html_kvartiry_novostroyka(html):
         try:
             item_id = item['id']
             logger.debug(f'Detected item_id:  {item_id}')
-            if item_id in item_ids_from_db:
+            if item_id not in item_ids_to_parse:
                 logger.debug(
                     f'Detected item_id is already exist in database: {item_id} | Skipped...')
                 logger.debug(
@@ -543,6 +550,13 @@ def parse_html_doma_dachi_kottedzhi(html):
     item_ids_from_db = database.get_item_ids('doma_dachi_kottedzhi')
     logger.debug(
         f'Number of item_ids are already exist in database: {len(item_ids_from_db)}')
+    item_ids_list = []
+    for item in items:
+        item_ids_list.append(item['id'])
+    item_ids_set = set(item_ids_list)
+    logger.debug(f'item_tuple: {item_ids_set}')
+    item_ids_to_parse = item_ids_set.difference(item_ids_from_db)
+    logger.debug(f'items_to_parse: {item_ids_to_parse}')
     for item in items:
         # We intercept the error in case some fields are not filled while
         # parsing. An error during parsing causes the whole process to stop.
@@ -550,7 +564,7 @@ def parse_html_doma_dachi_kottedzhi(html):
         try:
             item_id = item['id']
             logger.debug(f'Detected item_id:  {item_id}')
-            if item_id in item_ids_from_db:
+            if item_id not in item_ids_to_parse:
                 logger.debug(
                     f'Detected item_id is already exist in database: {item_id} | Skipped...')
                 logger.debug(
