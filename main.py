@@ -179,6 +179,12 @@ if __name__ == "__main__":
         if browser.service.is_connectable():
             browser.quit()
 
+    # Get visualization
+    visualisation.get_visualization()
+
+    # Push fresh data from SQLite DB to remote PostgreSQL DB on VPS Server
+    db_migration.migration()
+
     time_end = time.time()
     elapsed_time = time_end - time_begin
     if elapsed_time > 60:
@@ -190,8 +196,4 @@ if __name__ == "__main__":
     logger.info(
         f'Elapsed run time: {elapsed_time_str} seconds | New vtorichka items: {scraper.vtorichka_counter} | New novostroy items: {scraper.novostroy_counter} | New doma_dachi_kottedzhi items: {scraper.doma_dachi_kottedzhi_counter}')
 
-    # Get visualization
-    visualisation.get_visualization()
 
-    # Push fresh data from SQLite DB to remote PostgreSQL DB on VPS Server
-    db_migration.migration()
